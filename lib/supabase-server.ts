@@ -15,14 +15,14 @@ export function createServerSupabaseClient() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
+          } catch {
             // Handle edge cases where cookies cannot be set (e.g., in Server Components)
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
+          } catch {
             // Handle edge cases
           }
         },

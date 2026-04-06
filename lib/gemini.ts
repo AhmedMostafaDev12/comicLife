@@ -28,7 +28,7 @@ ${story}
   const clean = text.replace(/```json|```/g, '').trim();
   try {
     return JSON.parse(clean) as ParsedMoment[];
-  } catch (e) {
+  } catch {
     console.error("Failed to parse Gemini response:", text);
     throw new Error("Invalid response from AI story parser");
   }
