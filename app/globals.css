@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream:  #E8E4D8;
+  --ink:    #0E0E0E;
+  --white:  #F5F2E8;
+  --yellow: #D4E84A;
+  --muted:  #6B6860;
+  --card-r: 14px;
+}
+
+body {
+  background-color: var(--cream);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* Scrollbar customizations for ink sections */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(14, 14, 14, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14, 14, 14, 0.4);
+}
+
+/* Reusable animation utilities */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 16s linear infinite;
+}
