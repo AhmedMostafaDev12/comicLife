@@ -76,6 +76,12 @@ export interface PanelDraft {
   image_prompt: string
 }
 
+export type ParsedMoment = {
+  moment: string;    // visual scene description
+  caption: string;   // short caption for the panel
+  emotion: string;   // emotional tone (happy, melancholic, tense, etc.)
+};
+
 export type ArtStyle =
   | 'painterly'
   | 'comic_book'
@@ -87,3 +93,15 @@ export type ArtStyle =
   | 'sketch'
   | 'dark_fantasy'
   | 'pop_art'
+
+export interface Comic {
+  id: string
+  user_id: string
+  title: string
+  story: string
+  style: ArtStyle
+  is_draft: boolean
+  soundtrack_url?: string | null
+  created_at: string
+  updated_at: string
+}
