@@ -18,16 +18,36 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-    
-    if (error) {
-      setError(error.message)
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Environment variables for Supabase are missing. Please check your Vercel settings.')
       setLoading(false)
-    } else {
-      router.push('/dashboard')
+      return
+    }
+
+    try {
+      console.log('Attempting login for:', email)
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      
+      if (error) {
+        console.error('Login error:', error)
+        setError(error.message)
+        setLoading(false)
+      } else if (data?.user) {
+        console.log('Login successful, redirecting...')
+        // Force a refresh to ensure cookies are picked up
+        window.location.href = '/dashboard'
+      } else {
+        console.warn('Login returned no error but no user data')
+        setError('An unexpected error occurred. Please try again.')
+        setLoading(false)
+      }
+    } catch (err: any) {
+      console.error('Unexpected login crash:', err)
+      setError(`Crash: ${err.message || 'Unknown error'}`)
+      setLoading(false)
     }
   }
 
