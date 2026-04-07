@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 
 interface CardStyle {
   top: string
@@ -74,18 +75,16 @@ const StyleCard = ({ card }: { card: StyleCardData }) => (
 
       {/* Image area */}
       <div className="relative rounded-[5px] overflow-hidden" style={{ aspectRatio: '1/1' }}>
-        <img
+        <Image
           src={card.image}
           alt={card.name}
-          className="w-full h-full object-cover object-top"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.backgroundColor = '#1a1a1a'
-          }}
+          fill
+          className="object-cover object-top"
         />
 
         {/* Letter badge — top left, exactly as reference */}
         <div className="absolute top-[5px] left-[5px] w-4 h-4 rounded-full
-                        bg-black/60 flex items-center justify-center">
+                        bg-black/60 flex items-center justify-center z-10">
           <span className="font-mono text-white text-[8px] font-bold leading-none">
             {card.letter}
           </span>
@@ -93,7 +92,7 @@ const StyleCard = ({ card }: { card: StyleCardData }) => (
 
         {/* Style number — top right, exactly as reference */}
         <span className="absolute top-[5px] right-[5px]
-                         font-mono text-white/70 text-[7px] tracking-wide">
+                         font-mono text-white/70 text-[7px] tracking-wide z-10">
           {card.num}
         </span>
       </div>
@@ -115,10 +114,11 @@ export default function StyleSection() {
     <section className="relative w-full min-h-screen overflow-hidden flex items-center">
 
       {/* Background image — fills entire section */}
-      <img
+      <Image
         src="/images/landing/choose_your_style.png"
         alt="Choose your style"
-        className="absolute inset-0 w-full h-full object-cover object-center md:object-left"
+        fill
+        className="object-cover object-center md:object-left"
       />
 
       {/* TOP FADE — blends from HeroSection cream */}

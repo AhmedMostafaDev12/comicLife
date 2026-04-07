@@ -1,16 +1,19 @@
 'use client'
 
 import React from 'react'
+import Image from 'next/image'
 
 export default function WriteSection() {
   return (
     <section className="relative w-full min-h-screen overflow-hidden flex items-center">
 
       {/* Background */}
-      <img
+      <Image
         src="/images/landing/write_your_story_background.png"
         alt="Write your story"
-        className="absolute inset-0 w-full h-full object-cover object-center md:object-right"
+        fill
+        className="object-cover object-center md:object-right"
+        priority
       />
 
       {/* TOP FADE — blends from StyleSection cream */}
@@ -43,11 +46,12 @@ export default function WriteSection() {
               style={{ transform: 'rotate(-4deg)' }}
             >
               {/* Image */}
-              <div className="rounded-[8px] overflow-hidden aspect-[3/4]">
-                <img
+              <div className="rounded-[8px] overflow-hidden aspect-[3/4] relative">
+                <Image
                   src="/images/landing/comic_sequence.jpg"
                   alt="Comic sequence"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               </div>
 

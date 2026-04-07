@@ -1,16 +1,19 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function HeroSection() {
   return (
     <section className="relative min-h-screen w-full overflow-hidden flex flex-col bg-cream pt-[54px]">
       {/* BACKGROUND LAYER */}
       <div className="absolute inset-0 z-[1] w-full h-full">
-        <img 
+        <Image 
           src="/images/landing/the background.jpg" 
           alt="The Entire History of You" 
-          className="w-full h-full object-cover object-right md:object-[70%_center] lg:object-right"
+          fill
+          className="object-cover object-right md:object-[70%_center] lg:object-right"
+          priority
         />
       </div>
 

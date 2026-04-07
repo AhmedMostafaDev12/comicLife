@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function StyleGallery() {
   const styles = [
     { name: 'Painterly', unlocked: true, image: '/images/landing/anime_1_stylr.jpg' },
@@ -32,10 +34,11 @@ export default function StyleGallery() {
             {style.unlocked ? (
               <>
                 {style.image ? (
-                  <img 
+                  <Image 
                     src={style.image} 
                     alt={style.name} 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105" 
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105" 
                   />
                 ) : (
                   <div className="absolute inset-0 bg-ink/5 z-0" />
