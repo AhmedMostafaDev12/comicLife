@@ -16,16 +16,20 @@ export const STYLE_PROMPTS: Record<ArtStyle, string> = {
 export function buildPanelPrompt(
   moment: string,
   style: ArtStyle | string,
-  characterDesc: string,
+  characters: string[], // Array of descriptions
   customStyleFragment?: string
 ): string {
   const styleFragment = customStyleFragment || STYLE_PROMPTS[style as ArtStyle] || STYLE_PROMPTS.painterly;
+  const characterContext = characters.length > 0 
+    ? `Characters in this scene: ${characters.join(' | ')}.`
+    : '';
+
   return [
     `Comic panel illustration.`,
     `Style: ${styleFragment}.`,
     `Scene: ${moment}.`,
-    `Main character: ${characterDesc}.`,
-    `Composition: Lower-third framing. The character and primary action MUST be in the bottom 60% of the image.`,
+    characterContext,
+    `Composition: Lower-third framing. The characters and primary action MUST be in the bottom 60% of the image.`,
     `Upper area: The top 40% of the image MUST be empty negative space (sky, ceiling, or simple background) to allow for text placement.`,
     `Aspect ratio: 4:3.`,
     `High quality, sharp lines, no text or watermarks.`,

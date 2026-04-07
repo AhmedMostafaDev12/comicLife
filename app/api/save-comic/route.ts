@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '../../../lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
 
+interface PanelData {
+  image_url: string;
+  caption: string;
+  prompt_used: string;
+}
+
 export async function POST(req: Request) {
   try {
     const supabase = createServerSupabaseClient();
@@ -40,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Insert panels
-    const panelsToInsert = panels.map((panel: any, index: number) => ({
+    const panelsToInsert = (panels as PanelData[]).map((panel, index: number) => ({
       id: uuidv4(),
       comic_id: comicId,
       image_url: panel.image_url,
@@ -61,8 +67,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ comicId });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Save Comic Error:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

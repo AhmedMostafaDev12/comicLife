@@ -10,9 +10,6 @@ export async function POST(req: Request) {
     const supabase = createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // For demo, we might allow no user, but the Guidebook expects one
-    // if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
     const formData = await req.formData();
     const file = formData.get('avatar') as File;
     const style = (formData.get('style') as string) || 'painterly';
@@ -56,12 +53,11 @@ export async function POST(req: Request) {
     // 3. GENERATE STYLIZED AVATAR (Imagen)
     const { buildPanelPrompt } = await import('../../../lib/prompts');
     const { generatePanelImage } = await import('../../../lib/imagen');
-    const { ArtStyle } = await import('../../../types');
 
     const avatarPrompt = buildPanelPrompt(
       "A professional studio portrait of the character, facing the camera.",
-      style as any,
-      characterDescription
+      style,
+      [characterDescription]
     );
 
     const generatedBase64 = await generatePanelImage(avatarPrompt);
@@ -71,14 +67,14 @@ export async function POST(req: Request) {
     let avatarUrl = `data:image/webp;base64,${generatedBase64}`;
     if (user) {
       const path = `avatars/${user.id}.webp`;
-      const { data, error } = await supabase.storage.from('avatars').upload(path, stylizedBuffer, {
+      const { error } = await supabase.storage.from('avatars').upload(path, stylizedBuffer, {
         contentType: 'image/webp',
         upsert: true
       });
       
       if (!error) {
-        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-        avatarUrl = publicUrl;
+        const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(path);
+        avatarUrl = publicUrlData.publicUrl;
       }
     }
 
@@ -93,8 +89,9 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ avatarUrl, characterDescription });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Upload Error:", error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
