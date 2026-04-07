@@ -40,18 +40,23 @@ export default function ComicPanel({ panel, editable, index, onUpdate, onRegener
             <div 
               className="bg-white border-2 border-ink p-2.5 shadow-sm max-w-[85%] inline-block cursor-pointer hover:bg-yellow/5 transition-colors"
               onClick={() => editable && setIsEditingCaption(true)}
+              dir="auto"
             >
               {isEditingCaption ? (
                 <textarea
                   autoFocus
                   className="w-full bg-transparent text-ink font-barlow font-bold text-[14px] leading-tight outline-none resize-none"
+                  style={{ fontFamily: 'var(--font-arabic), "Barlow Condensed", sans-serif' }}
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   onBlur={handleBlur}
                   rows={2}
                 />
               ) : (
-                <p className="font-barlow font-bold text-[14px] leading-tight text-ink uppercase tracking-tight">
+                <p 
+                  className="font-barlow font-bold text-[14px] leading-tight text-ink uppercase tracking-tight"
+                  style={{ fontFamily: 'var(--font-arabic), "Barlow Condensed", sans-serif' }}
+                >
                   {panel.caption}
                 </p>
               )}
@@ -61,8 +66,11 @@ export default function ComicPanel({ panel, editable, index, onUpdate, onRegener
 
         {/* Speech Bubble (Secondary, if exists) */}
         {panel.speech_bubble && (
-          <div className="absolute bottom-4 left-4 max-w-[70%] bg-white border-2 border-ink rounded-full px-4 py-2 shadow-sm z-10">
-            <p className="font-barlow font-bold text-[13px] leading-tight text-ink">
+          <div className="absolute bottom-4 left-4 max-w-[70%] bg-white border-2 border-ink rounded-full px-4 py-2 shadow-sm z-10" dir="auto">
+            <p 
+              className="font-barlow font-bold text-[13px] leading-tight text-ink"
+              style={{ fontFamily: 'var(--font-arabic), "Barlow Condensed", sans-serif' }}
+            >
               {panel.speech_bubble}
             </p>
             <div className="absolute -bottom-2 left-4 w-3 h-3 bg-white border-r-2 border-b-2 border-ink transform rotate-45 translate-y-[-50%]" />

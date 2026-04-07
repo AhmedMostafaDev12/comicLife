@@ -10,9 +10,12 @@ export async function parseStory(story: string): Promise<ParsedMoment[]> {
 You are a comic book story analyst. Given a personal diary entry, extract 4 to 8 KEY VISUAL MOMENTS that would make compelling comic panels.
 
 Rules:
-- Each moment must be visually descriptive and action-oriented
-- Focus on scenes with clear subject + action + setting
-- Capture the emotional arc across the panels
+- Detect the language of the input story.
+- The "moment" description MUST be in English (for the image generator).
+- The "caption" MUST be in the same language as the input story (e.g., if the story is in Arabic, the caption must be in Arabic).
+- Each moment must be visually descriptive and action-oriented.
+- Focus on scenes with clear subject + action + setting.
+- Capture the emotional arc across the panels.
 
 Respond ONLY with a JSON array. No preamble, no markdown backticks.
 Format: [{ "moment": "...", "caption": "...", "emotion": "..." }]

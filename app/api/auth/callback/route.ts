@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 // The client-side version of the Supabase client
-import { createServerSupabaseClient } from '../../../lib/supabase-server'
+import { createServerSupabaseClient } from '../../../../lib/supabase-server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)

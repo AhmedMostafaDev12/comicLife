@@ -130,8 +130,11 @@ export default function ComicReader() {
                 {/* Caption Box (Overlay) */}
                 {panel.caption && (
                   <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 max-w-[85%] sm:max-w-[80%]">
-                    <div className="bg-white border-[1.5px] sm:border-2 border-ink p-2 sm:p-3 shadow-lg inline-block">
-                      <p className="font-barlow font-bold text-[13px] sm:text-[15px] leading-tight text-ink uppercase tracking-tight">
+                    <div className="bg-white border-[1.5px] sm:border-2 border-ink p-2 sm:p-3 shadow-lg inline-block" dir="auto">
+                      <p 
+                        className="font-barlow font-bold text-[13px] sm:text-[15px] leading-tight text-ink uppercase tracking-tight"
+                        style={{ fontFamily: 'var(--font-arabic), "Barlow Condensed", sans-serif' }}
+                      >
                         {panel.caption}
                       </p>
                     </div>
@@ -140,13 +143,17 @@ export default function ComicReader() {
 
                 {/* Speech Bubble */}
                 {panel.speech_bubble && (
-                  <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 max-w-[70%] sm:max-w-[60%] bg-white border-2 border-ink rounded-full px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl z-10">
-                    <p className="font-barlow font-bold text-[14px] sm:text-[16px] leading-tight text-ink">
+                  <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 max-w-[70%] sm:max-w-[60%] bg-white border-2 border-ink rounded-full px-4 py-2 sm:px-5 sm:py-2.5 shadow-xl z-10" dir="auto">
+                    <p 
+                      className="font-barlow font-bold text-[14px] sm:text-[16px] leading-tight text-ink"
+                      style={{ fontFamily: 'var(--font-arabic), "Barlow Condensed", sans-serif' }}
+                    >
                       {panel.speech_bubble}
                     </p>
-                    <div className="absolute -top-2 right-6 w-4 h-4 sm:w-5 sm:h-5 bg-white border-l-2 border-t-2 border-ink transform rotate-45 translate-y-[50%]" />
+                    <div className="absolute -top-2 right-6 w-4 h-4 sm:w-5 sm:h-5 bg-white border-l-2 border-t-2 border-ink transform rotate-45 translate-y-[-50%]" />
                   </div>
                 )}
+
               </div>
             )
           })}
