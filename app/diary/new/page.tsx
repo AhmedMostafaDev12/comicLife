@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import DiaryEditor from '../../../components/diary/DiaryEditor'
 import StylePicker from '../../../components/diary/StylePicker'
@@ -54,14 +55,18 @@ export default function NewDiaryPage() {
         })
       })
       
-      if (!response.ok) throw new Error('Generation failed')
+      if (!response.ok) {
+        const errData = await response.json()
+        throw new Error(errData.error || 'Generation failed')
+      }
       
       const data = await response.json()
       setPanels(data.panels)
       setStep(4)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      setStep(4)
+      alert(`Generation Error: ${error.message}`)
+      setStep(2) // Go back to setup so they can try again or change style
     } finally {
       setGenerating(false)
     }

@@ -48,7 +48,7 @@ export default function ComicGrid({ panels, editable = false }: ComicGridProps) 
       }))
       
       setPanels(newPanels)
-    }
+    }t 
   }
 
   const handleUpdate = (id: string, updates: Partial<Panel>) => {

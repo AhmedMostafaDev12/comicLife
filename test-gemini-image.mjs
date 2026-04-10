@@ -4,21 +4,21 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Specifically load .env.local
-dotenv.config({ path: '.env.local' });
+// dotenv.config({ path: '.env.local' });
 
 // Load API key from .env.local manually for this script
-const API_KEY = process.env.GEMINI_API_KEY;
+const API_KEY = AIzaSyAekjDwabdEWclyJtJaH6Ci8BbzhV-OhNg;
 
-if (!API_KEY || API_KEY === 'your-gemini-api-key') {
-  console.error("❌ Error: GEMINI_API_KEY is not set in .env.local");
-  process.exit(1);
-}
+// if (!API_KEY || API_KEY === 'your-gemini-api-key') {
+//   console.error("❌ Error: GEMINI_API_KEY is not set in .env.local");
+//   process.exit(1);
+// }
 
 async function main() {
   console.log("🚀 Initializing Gemini Native Image Generation...");
   const genAI = new GoogleGenerativeAI(API_KEY);
 
-  const prompt = "Create a picture of a nano banana dish in a fancy restaurant with a Gemini theme";
+  const prompt = "painterly comic art, gouache and oil, warm lighting, editorial illustration which is about a dad holding its new born child ";
 
   try {
     // Note: The new unified API uses generateContent for both text and native images
