@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '../../../lib/supabase-server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '../../../lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PanelData {
+  id?: string;
   image_url: string;
   caption: string;
   prompt_used: string;
@@ -10,7 +11,8 @@ interface PanelData {
 
 export async function POST(req: Request) {
   try {
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
+    const adminSupabase = createAdminSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
     const comicId = uuidv4();
     const coverUrl = panels[0]?.image_url || null;
 
-    const { error: comicError } = await supabase
+    const { error: comicError } = await adminSupabase
       .from('comics')
       .insert({
         id: comicId,
@@ -45,24 +47,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to save comic' }, { status: 500 });
     }
 
-    // 2. Insert panels
+    // 2. Insert panels using their existing IDs to maintain front/back sync
     const panelsToInsert = (panels as PanelData[]).map((panel, index: number) => ({
       id: uuidv4(),
       comic_id: comicId,
       image_url: panel.image_url,
       caption: panel.caption,
+      bubbles: (panel as any).bubbles || null,
       prompt: panel.prompt_used,
       panel_index: index
     }));
 
-    const { error: panelsError } = await supabase
+    const { error: panelsError } = await adminSupabase
       .from('panels')
       .insert(panelsToInsert);
 
     if (panelsError) {
       console.error('Error saving panels:', panelsError);
-      // We might want to delete the comic here to maintain consistency
-      await supabase.from('comics').delete().eq('id', comicId);
+      await adminSupabase.from('comics').delete().eq('id', comicId);
       return NextResponse.json({ error: 'Failed to save comic panels' }, { status: 500 });
     }
 

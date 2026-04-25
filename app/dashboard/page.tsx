@@ -9,7 +9,26 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'diary' | 'stories' | 'public'>('diary')
   const [comics, setComics] = useState<Comic[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const supabase = createSupabaseClient()
+
+  const handleDelete = async (comicId: string, title: string) => {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return
+    setDeleting(comicId)
+    try {
+      const res = await fetch('/api/delete-comic', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comicId }),
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      setComics(prev => prev.filter(c => c.id !== comicId))
+    } catch (err: any) {
+      alert(`Failed to delete: ${err.message}`)
+    } finally {
+      setDeleting(null)
+    }
+  }
   
   useEffect(() => {
     async function fetchComics() {
@@ -129,41 +148,58 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {comics.map((comic) => (
-              <Link 
-                href={`/read/${comic.id}`} 
-                key={comic.id}
-                className="group flex flex-col gap-4"
-              >
-                <div className="aspect-[4/3] bg-ink rounded-card overflow-hidden border border-ink relative shadow-sm group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
-                  {/* Comic Cover */}
-                  {comic.cover_url ? (
-                    <img src={comic.cover_url} alt={comic.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  ) : (
-                    <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1 p-1">
-                      <div className="bg-white/5 rounded-sm" />
-                      <div className="bg-white/5 rounded-sm" />
-                      <div className="bg-white/5 rounded-sm" />
-                      <div className="bg-white/5 rounded-sm" />
+              <div key={comic.id} className="group flex flex-col gap-4">
+                <Link
+                  href={`/read/${comic.id}`}
+                  className="block"
+                >
+                  <div className="aspect-[4/3] bg-ink rounded-card overflow-hidden border border-ink relative shadow-sm group-hover:shadow-xl transition-all duration-300 group-hover:-translate-y-1">
+                    {comic.cover_url ? (
+                      <img src={comic.cover_url} alt={comic.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                    ) : (
+                      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-1 p-1">
+                        <div className="bg-white/5 rounded-sm" />
+                        <div className="bg-white/5 rounded-sm" />
+                        <div className="bg-white/5 rounded-sm" />
+                        <div className="bg-white/5 rounded-sm" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center gap-3 bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="bg-yellow text-ink font-mono text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-wider">
+                        Read
+                      </span>
                     </div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="bg-yellow text-ink font-mono text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-wider">
-                      Read Story
+                    <div className="absolute top-3 left-3 bg-white border border-ink px-2 py-0.5 font-mono text-[8px] uppercase font-bold">
+                      {comic.style}
+                    </div>
+                  </div>
+                </Link>
+                <div className="flex items-start justify-between gap-2 px-1">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <h3 className="font-barlow font-bold text-xl uppercase tracking-tight text-ink group-hover:text-yellow transition-colors truncate">
+                      {comic.title}
+                    </h3>
+                    <span className="font-mono text-[10px] text-muted uppercase">
+                      {new Date(comic.created_at).toLocaleDateString()} — {comic.story?.split(/\s+/).length || 0} Words
                     </span>
                   </div>
-                  <div className="absolute top-3 left-3 bg-white border border-ink px-2 py-0.5 font-mono text-[8px] uppercase font-bold">
-                    {comic.style}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Link
+                      href={`/diary/new?edit=${comic.id}`}
+                      className="border border-ink/20 text-ink font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full hover:bg-yellow hover:border-yellow transition"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(comic.id, comic.title)}
+                      disabled={deleting === comic.id}
+                      className="border border-red-300 text-red-500 font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white hover:border-red-500 disabled:opacity-50 transition"
+                    >
+                      {deleting === comic.id ? '...' : 'Del'}
+                    </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-1 px-1">
-                  <h3 className="font-barlow font-bold text-xl uppercase tracking-tight text-ink group-hover:text-yellow transition-colors">
-                    {comic.title}
-                  </h3>
-                  <span className="font-mono text-[10px] text-muted uppercase">
-                    {new Date(comic.created_at).toLocaleDateString()} — {comic.story.split(/\s+/).length} Words
-                  </span>
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

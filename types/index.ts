@@ -8,12 +8,25 @@ export interface Profile {
   created_at: string
 }
 
+export type BubbleType = 'speech' | 'thought' | 'narration'
+
+export interface Bubble {
+  type: BubbleType
+  text: string
+  /** X position as percentage (0-100) from left */
+  x: number
+  /** Y position as percentage (0-100) from top */
+  y: number
+}
+
 export interface Panel {
   id: string
   order: number
   caption: string
   speech_bubble?: string | null
+  bubbles?: Bubble[]
   image_url?: string
+  video_url?: string
   prompt_used?: string
   style: string
   mood?: string
@@ -70,16 +83,28 @@ export interface PanelDraft {
   scene_description: string
   caption: string
   speech_bubble: string | null
+  bubbles?: Bubble[]
   mood: string
   time_of_day: string
   setting: string
   image_prompt: string
 }
 
+export type VisualDNA = {
+  character_traits: Record<string, string>; // e.g. { "Main Character": "red hoodie, blue jeans, messy black hair" }
+  setting_dna: string; // e.g. "A futuristic neon-lit city with rain-slicked streets"
+};
+
 export type ParsedMoment = {
   moment: string;    // visual scene description
-  caption: string;   // short caption for the panel
+  caption: string;   // short caption for the panel (legacy fallback)
   emotion: string;   // emotional tone (happy, melancholic, tense, etc.)
+  bubbles?: Bubble[];
+};
+
+export type StoryParsingResult = {
+  visual_dna: VisualDNA;
+  moments: ParsedMoment[];
 };
 
 export type ArtStyle =
@@ -101,6 +126,7 @@ export interface Comic {
   story: string
   style: ArtStyle
   is_draft: boolean
+  cover_url?: string | null
   soundtrack_url?: string | null
   created_at: string
   updated_at: string

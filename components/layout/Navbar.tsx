@@ -2,17 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import NavSpinBadge from './NavSpinBadge'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  const hideNavbar = pathname.startsWith('/read/') || pathname.startsWith('/film/')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  if (hideNavbar) return null
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-[100] h-[64px] flex items-center justify-between px-6 md:px-8 transition-all duration-300 ${

@@ -17,9 +17,25 @@ export default function ProfilePage() {
   const [isAddingChar, setIsAddingChar] = useState(false)
   const [newCharStatus, setNewCharStatus] = useState<'idle' | 'processing' | 'done'>('idle')
   const [newCharName, setNewCharName] = useState('')
+  const [newCharStyle, setNewCharStyle] = useState('painterly')
   const [newCharImage, setNewCharImage] = useState<File | null>(null)
   const [newCharPreview, setNewCharPreview] = useState<string | null>(null)
+  const [customStyleRef, setCustomStyleRef] = useState<File | null>(null)
+  const [customStylePreview, setCustomStylePreview] = useState<string | null>(null)
+  const [removingAvatar, setRemovingAvatar] = useState(false)
   const charFileInputRef = useRef<HTMLInputElement>(null)
+  const charStyleFileRef = useRef<HTMLInputElement>(null)
+
+  const STYLES = [
+    { id: 'painterly', name: 'Painterly' },
+    { id: 'manga', name: 'Manga' },
+    { id: 'comic_book', name: 'Comic Book' },
+    { id: 'noir', name: 'Noir' },
+    { id: 'webtoon', name: 'Webtoon' },
+    { id: 'retro_pop', name: 'Retro Pop' },
+    { id: 'sketch', name: 'Sketch' },
+    { id: 'watercolor', name: 'Watercolor' },
+  ]
   
   const supabase = createSupabaseClient()
 
@@ -102,7 +118,10 @@ export default function ProfilePage() {
     const formData = new FormData()
     formData.append('image', newCharImage)
     formData.append('name', newCharName)
-    formData.append('style', 'painterly')
+    formData.append('style', newCharStyle)
+    if (newCharStyle === 'custom' && customStyleRef) {
+      formData.append('style_reference', customStyleRef)
+    }
 
     try {
       const response = await fetch('/api/create-character', {
@@ -115,16 +134,33 @@ export default function ProfilePage() {
       const data = await response.json()
       setCharacters([...characters, data.character])
       
-      // Reset
       setIsAddingChar(false)
       setNewCharName('')
+      setNewCharStyle('painterly')
       setNewCharImage(null)
       setNewCharPreview(null)
+      setCustomStyleRef(null)
+      setCustomStylePreview(null)
       setNewCharStatus('idle')
     } catch (err: any) {
       console.error(err)
       alert(`Error: ${err.message}`)
       setNewCharStatus('idle')
+    }
+  }
+
+  const handleRemoveAvatar = async () => {
+    if (!confirm('Remove your avatar? You can always create a new one.')) return
+    setRemovingAvatar(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('users').update({ avatar_url: null }).eq('id', user.id)
+      setProfile((p: any) => ({ ...p, avatar_url: null }))
+    } catch (err: any) {
+      alert(`Failed: ${err.message}`)
+    } finally {
+      setRemovingAvatar(false)
     }
   }
 
@@ -163,7 +199,18 @@ export default function ProfilePage() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/20 font-mono text-[10px] uppercase">No Avatar</div>
               )}
-              <Link href="/avatar" className="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-yellow font-mono text-[10px] font-bold uppercase">Change Avatar</Link>
+              <div className="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3">
+                <Link href="/avatar" className="bg-yellow text-ink font-mono text-[10px] font-bold uppercase px-5 py-2 rounded-full hover:bg-[#c8dc38] transition">Change Avatar</Link>
+                {profile?.avatar_url && (
+                  <button
+                    onClick={handleRemoveAvatar}
+                    disabled={removingAvatar}
+                    className="border border-red-400 text-red-400 font-mono text-[9px] font-bold uppercase px-4 py-1.5 rounded-full hover:bg-red-500 hover:text-white hover:border-red-500 disabled:opacity-50 transition"
+                  >
+                    {removingAvatar ? 'Removing...' : 'Remove Avatar'}
+                  </button>
+                )}
+              </div>
             </div>
             <div className="bg-white border border-ink/10 p-4 rounded-[12px] text-center">
                <span className="block font-mono text-[9px] uppercase text-muted mb-1">ACCOUNT EMAIL</span>
@@ -224,15 +271,60 @@ export default function ProfilePage() {
                 />
                 
                 <input type="file" ref={charFileInputRef} onChange={handleCharFileChange} className="hidden" accept="image/*" />
-                <div 
+                <div
                   onClick={() => charFileInputRef.current?.click()}
-                  className="aspect-square bg-cream/20 border-2 border-dashed border-ink/10 rounded-[14px] flex items-center justify-center cursor-pointer hover:border-yellow transition-colors overflow-hidden"
+                  className="aspect-[4/3] bg-cream/20 border-2 border-dashed border-ink/10 rounded-[14px] flex items-center justify-center cursor-pointer hover:border-yellow transition-colors overflow-hidden"
                 >
                   {newCharPreview ? (
                     <img src={newCharPreview} className="w-full h-full object-cover" alt="Preview" />
                   ) : (
                     <span className="font-mono text-[9px] uppercase text-ink/30">Click to upload photo</span>
                   )}
+                </div>
+
+                {/* Style Picker */}
+                <input type="file" ref={charStyleFileRef} onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    setCustomStyleRef(f)
+                    setNewCharStyle('custom')
+                    const r = new FileReader()
+                    r.onloadend = () => setCustomStylePreview(r.result as string)
+                    r.readAsDataURL(f)
+                  }
+                }} className="hidden" accept="image/*" />
+                <div className="flex flex-col gap-1.5">
+                  <span className="font-mono text-[8px] uppercase text-ink/40 tracking-widest">Style</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {STYLES.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setNewCharStyle(s.id)}
+                        className={`px-3 py-1.5 rounded-full font-mono text-[8px] uppercase tracking-wider transition-all ${
+                          newCharStyle === s.id
+                            ? 'bg-yellow text-ink font-bold border border-yellow'
+                            : 'bg-white border border-ink/10 text-ink/50 hover:border-ink/30'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => charStyleFileRef.current?.click()}
+                      className={`px-3 py-1.5 rounded-full font-mono text-[8px] uppercase tracking-wider transition-all flex items-center gap-1 ${
+                        newCharStyle === 'custom'
+                          ? 'bg-yellow text-ink font-bold border border-yellow'
+                          : 'bg-white border border-dashed border-ink/20 text-ink/50 hover:border-yellow'
+                      }`}
+                    >
+                      {customStylePreview ? (
+                        <img src={customStylePreview} className="w-4 h-4 rounded-sm object-cover" alt="" />
+                      ) : (
+                        <span>+</span>
+                      )}
+                      Custom
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -243,7 +335,7 @@ export default function ProfilePage() {
                   >
                     {newCharStatus === 'processing' ? 'AI IS DRAWING...' : 'CREATE CHARACTER'}
                   </button>
-                  <button onClick={() => { setIsAddingChar(false); setNewCharPreview(null); }} className="text-ink/40 font-mono text-[9px] uppercase py-2">Cancel</button>
+                  <button onClick={() => { setIsAddingChar(false); setNewCharPreview(null); setNewCharName(''); setNewCharStyle('painterly'); }} className="text-ink/40 font-mono text-[9px] uppercase py-2">Cancel</button>
                 </div>
               </div>
             )}

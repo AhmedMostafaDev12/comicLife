@@ -10,7 +10,10 @@ export default function AvatarCreator() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null)
   const [baseDescription, setBaseDescription] = useState('')
+  const [customStylePreview, setCustomStylePreview] = useState<string | null>(null)
+  const [customStyleFile, setCustomStyleFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const styleFileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createSupabaseClient()
   
   const { setAvatar } = useSessionStore()
@@ -51,14 +54,28 @@ export default function AvatarCreator() {
     }
   }
 
+  const handleCustomStyleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCustomStyleFile(file)
+      setStyle('custom')
+      const reader = new FileReader()
+      reader.onloadend = () => setCustomStylePreview(reader.result as string)
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleUploadAndGenerate = async () => {
     if (!fileInputRef.current?.files?.[0]) return
-    
+
     setStatus('uploading')
     const formData = new FormData()
     formData.append('avatar', fileInputRef.current.files[0])
     formData.append('style', style)
     formData.append('base_description', baseDescription)
+    if (style === 'custom' && customStyleFile) {
+      formData.append('style_reference', customStyleFile)
+    }
     
     try {
       const response = await fetch('/api/upload-avatar', {
@@ -128,9 +145,10 @@ export default function AvatarCreator() {
           </div>
 
           {/* STYLE PICKER (Horizontal Scroll) */}
+          <input type="file" ref={styleFileInputRef} onChange={handleCustomStyleChange} className="hidden" accept="image/*" />
           <div className="flex overflow-x-auto gap-4 pb-4 snap-x w-full max-w-[400px]">
             {STYLES.map((s) => (
-              <button 
+              <button
                 key={s.id}
                 onClick={() => setStyle(s.id)}
                 className={`snap-start shrink-0 w-[100px] h-[120px] rounded-[10px] overflow-hidden relative transition-all ${
@@ -150,6 +168,30 @@ export default function AvatarCreator() {
                 </div>
               </button>
             ))}
+
+            {/* Custom Style — upload a comic/manga reference */}
+            <button
+              onClick={() => styleFileInputRef.current?.click()}
+              className={`snap-start shrink-0 w-[100px] h-[120px] rounded-[10px] overflow-hidden relative transition-all ${
+                style === 'custom' ? 'border-[2.5px] border-yellow scale-105' : 'border-2 border-dashed border-ink/20 hover:border-yellow'
+              }`}
+            >
+              {customStylePreview ? (
+                <img src={customStylePreview} alt="Custom" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-ink/5 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-ink/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-transparent" />
+              <div className="absolute bottom-2 left-0 right-0 text-center">
+                <span className="font-barlow font-bold text-[9px] uppercase tracking-wider text-white drop-shadow-md">
+                  Custom
+                </span>
+              </div>
+            </button>
           </div>
 
           {/* GENERATE BUTTON */}

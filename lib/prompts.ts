@@ -17,21 +17,24 @@ export function buildPanelPrompt(
   moment: string,
   style: ArtStyle | string,
   characters: string[], // Array of descriptions
-  customStyleFragment?: string
+  customStyleFragment?: string,
+  settingDNA?: string
 ): string {
   const styleFragment = customStyleFragment || STYLE_PROMPTS[style as ArtStyle] || STYLE_PROMPTS.painterly;
-  const characterContext = characters.length > 0 
-    ? `Characters in this scene: ${characters.join(' | ')}.`
+  
+  // Extra character descriptions (if any)
+  const otherCharacters = characters.length > 0 
+    ? `Additional characters context: ${characters.join(' | ')}.`
     : '';
+  
+  const settingContext = settingDNA ? `Setting: ${settingDNA}.` : '';
 
   return [
-    `Comic panel illustration.`,
+    `IDENTITY (HIGHEST PRIORITY): The character MUST have the exact same face as the person in the reference images. Same bone structure, eyes, nose, mouth, skin tone, hair. The character must be clearly recognizable as that specific person.`,
     `Style: ${styleFragment}.`,
     `Scene: ${moment}.`,
-    characterContext,
-    `Composition: Lower-third framing. The characters and primary action MUST be in the bottom 60% of the image.`,
-    `Upper area: The top 40% of the image MUST be empty negative space (sky, ceiling, or simple background) to allow for text placement.`,
-    `Aspect ratio: 4:3.`,
-    `High quality, sharp lines, no text or watermarks.`,
+    otherCharacters,
+    settingContext,
+    `Composition: fill the frame with the scene. 4:3 ratio. No text, no speech bubbles, no watermarks, no lettering.`,
   ].join(' ');
 }

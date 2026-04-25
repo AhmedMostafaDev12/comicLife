@@ -48,7 +48,7 @@ export default function ComicGrid({ panels, editable = false }: ComicGridProps) 
       }))
       
       setPanels(newPanels)
-    }t 
+    }
   }
 
   const handleUpdate = (id: string, updates: Partial<Panel>) => {
@@ -56,8 +56,29 @@ export default function ComicGrid({ panels, editable = false }: ComicGridProps) 
   }
 
   const handleRegenerate = async (id: string) => {
-    // Implement API call for single panel regeneration
-    console.log("Regenerating panel", id)
+    const panel = panels.find(p => p.id === id)
+    if (!panel) return
+    const { selectedStyle } = useComicStore.getState()
+
+    updatePanel(id, { image_url: undefined } as any)
+
+    try {
+      const res = await fetch('/api/regenerate-panel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          panelId: id,
+          prompt: panel.prompt_used || `Scene: ${panel.caption}`,
+          style: selectedStyle,
+        }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error || 'Regen failed')
+      const data = await res.json()
+      updatePanel(id, { image_url: data.imageUrl })
+    } catch (err: any) {
+      console.error('Regen failed:', err)
+      alert(`Regeneration failed: ${err.message}`)
+    }
   }
 
   return (

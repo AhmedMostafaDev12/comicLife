@@ -2,32 +2,78 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import DiaryEditor from '../../../components/diary/DiaryEditor'
 import StylePicker from '../../../components/diary/StylePicker'
 import ComicGrid from '../../../components/comic/ComicGrid'
+import VoiceRecorder from '../../../components/diary/VoiceRecorder'
 import { useComicStore } from '../../../store/useComicStore'
 import { ArtStyle } from '../../../types'
 import { createSupabaseClient } from '../../../lib/supabase'
 
 export default function NewDiaryPage() {
-  const { 
-    currentStep, 
-    story, 
-    selectedStyle, 
-    panels, 
-    setStep, 
+  const {
+    currentStep,
+    story,
+    selectedStyle,
+    panels,
+    editingComicId,
+    setStep,
     setStory,
     setStyle,
     setPanels,
+    setEditingComicId,
     setGenerating,
   } = useComicStore()
 
   const [isPublishing, setIsPublishing] = useState(false)
   const [availableCharacters, setAvailableCharacters] = useState<any[]>([])
   const [selectedCharIds, setSelectedCharacterIds] = useState<string[]>([])
+  const [loadingEdit, setLoadingEdit] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createSupabaseClient()
+
+  const editId = searchParams.get('edit')
+
+  useEffect(() => {
+    if (!editId) return
+    if (editingComicId === editId) return
+
+    async function loadComic() {
+      setLoadingEdit(true)
+      try {
+        const { data: comic } = await supabase.from('comics').select('*').eq('id', editId).single()
+        if (!comic) return
+
+        const { data: panelsData } = await supabase
+          .from('panels')
+          .select('*')
+          .eq('comic_id', editId)
+          .order('panel_index', { ascending: true })
+
+        setStory(comic.story || '')
+        setStyle(comic.style as ArtStyle)
+        setEditingComicId(editId!)
+        setPanels((panelsData || []).map((p: any) => ({
+          id: p.id,
+          order: p.panel_index,
+          caption: p.caption,
+          image_url: p.image_url,
+          prompt_used: p.prompt,
+          style: comic.style,
+          speech_bubble: p.speech_bubble,
+          bubbles: p.bubbles,
+        })))
+        setStep(4)
+      } catch (err) {
+        console.error('Failed to load comic for editing:', err)
+      } finally {
+        setLoadingEdit(false)
+      }
+    }
+    loadComic()
+  }, [editId])
 
   useEffect(() => {
     async function fetchCast() {
@@ -76,19 +122,25 @@ export default function NewDiaryPage() {
     if (panels.length === 0) return
     setIsPublishing(true)
     try {
-      const response = await fetch('/api/save-comic', {
-        method: 'POST',
+      const isEditing = !!editingComicId
+      const url = isEditing ? '/api/update-comic' : '/api/save-comic'
+      const method = isEditing ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          comicId: editingComicId || undefined,
           story,
           style: selectedStyle,
           panels,
-          title: story.slice(0, 30) + '...',
+          title: story.replace(/<[^>]*>/g, '').slice(0, 30) + '...',
           soundtrackUrl: null
         })
       })
       if (!response.ok) throw new Error('Publish failed')
       const data = await response.json()
+      setEditingComicId(null)
       router.push(`/read/${data.comicId}`)
     } catch (error: any) {
       alert(`Failed to publish: ${error.message}`)
@@ -100,6 +152,23 @@ export default function NewDiaryPage() {
   const toggleCharacter = (id: string) => {
     setSelectedCharacterIds(prev => 
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    )
+  }
+
+  const handleTranscript = (text: string) => {
+    // Append to story if it's not empty, otherwise set it
+    const newStory = story.trim() 
+      ? `${story}<p>${text}</p>`
+      : `<p>${text}</p>`
+    setStory(newStory)
+  }
+
+  if (loadingEdit) {
+    return (
+      <main className="min-h-screen bg-cream flex flex-col items-center justify-center gap-6 mt-[64px]">
+        <div className="w-12 h-12 border-4 border-yellow border-t-transparent rounded-full animate-spin" />
+        <p className="font-mono text-ink text-[11px] uppercase tracking-widest">Loading comic for editing...</p>
+      </main>
     )
   }
 
@@ -129,9 +198,12 @@ export default function NewDiaryPage() {
           {/* STEP 1: WRITE */}
           {currentStep === 1 && (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4">
-              <div>
-                <h1 className="font-barlow font-black text-3xl sm:text-4xl uppercase tracking-tight text-ink mb-2">WRITE YOUR STORY</h1>
-                <p className="font-dm text-muted text-sm">A memory, a feeling, a moment.</p>
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div>
+                  <h1 className="font-barlow font-black text-3xl sm:text-4xl uppercase tracking-tight text-ink mb-2">WRITE YOUR STORY</h1>
+                  <p className="font-dm text-muted text-sm">A memory, a feeling, a moment.</p>
+                </div>
+                <VoiceRecorder onTranscript={handleTranscript} />
               </div>
               <DiaryEditor content={story} onChange={setStory} />
               <div className="flex flex-col sm:flex-row justify-end items-center gap-4">
@@ -233,7 +305,7 @@ export default function NewDiaryPage() {
               </div>
               <div className="mt-6 flex flex-col gap-3">
                 <button onClick={handlePublish} disabled={isPublishing || panels.length === 0} className="w-full bg-yellow disabled:opacity-50 text-ink font-mono text-[11px] font-bold tracking-wider uppercase py-4 rounded-full hover:bg-[#c8dc38] transition">
-                  {isPublishing ? 'PUBLISHING...' : 'PUBLISH COMIC'}
+                  {isPublishing ? 'SAVING...' : editingComicId ? 'UPDATE COMIC' : 'PUBLISH COMIC'}
                 </button>
               </div>
             </div>
