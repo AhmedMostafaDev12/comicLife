@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient, createAdminSupabaseClient } from '../../../lib/supabase-server'
 import { generatePanelImage } from '../../../lib/imagen'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: Request) {
   try {
@@ -13,10 +12,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { panelId, prompt, style, comicId } = await req.json()
+    const { panelId, prompt } = await req.json()
     if (!panelId || !prompt) {
       return NextResponse.json({ error: 'panelId and prompt required' }, { status: 400 })
     }
+
+    const { data: panel } = await admin
+      .from('panels')
+      .select('id, comic_id')
+      .eq('id', panelId)
+      .single()
+
+    if (!panel) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const { data: comic } = await admin
+      .from('comics')
+      .select('user_id')
+      .eq('id', panel.comic_id)
+      .single()
+
+    if (!comic || comic.user_id !== user.id) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    const cid = panel.comic_id
 
     // Load user avatar as reference
     let referenceBase64: string | undefined
@@ -32,7 +53,6 @@ export async function POST(req: Request) {
     const imageBase64 = await generatePanelImage(prompt, referenceBase64)
 
     // Upload
-    const cid = comicId || 'regen'
     const path = `panels/${cid}/${panelId}-${Date.now()}.webp`
     const buffer = Buffer.from(imageBase64, 'base64')
     await admin.storage.from('panels').upload(path, buffer, {

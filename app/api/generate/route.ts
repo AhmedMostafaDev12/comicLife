@@ -72,7 +72,8 @@ export async function POST(req: Request) {
         const { data: extraChars } = await adminSupabase
           .from('characters')
           .select('id, name, description, avatar_url')
-          .in('id', selectedCharacterIds);
+          .in('id', selectedCharacterIds)
+          .eq('user_id', user.id);
         
         for (const c of extraChars || []) {
           initialCharacterContext.push(`${c.name}: ${c.description}`);

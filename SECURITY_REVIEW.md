@@ -4,7 +4,7 @@ This document summarizes the critical security issues found during onboarding.
 
 ## Critical Issues
 
-### 1. Unauthenticated users can trigger expensive AI generation //TODO
+### 1. Unauthenticated users can trigger expensive AI generation //TODO ✅
 
 Several paid API routes either do not require authentication or continue doing costly work when there is no authenticated user.
 
@@ -22,7 +22,7 @@ The route then generates a video and updates the panel's `video_url`.
 
 Impact: any logged-in user who knows or guesses a `panelId` can animate another user's panel, read or use its prompt/image, and overwrite its video URL.
 
-### 3. Service-role client is used widely //Research
+### 3. Service-role client is used widely //Partially fixed ✅
 
 `lib/supabase-server.ts` exposes `createAdminSupabaseClient()`, which uses the Supabase service-role key. This bypasses Row Level Security.
 
@@ -36,7 +36,7 @@ Some routes do ownership checks correctly, such as delete, update, and film stat
 
 Impact: every missed ownership check can become a data-isolation or billing bug because RLS is bypassed.
 
-### 4. Selected character IDs are not scoped to the current user //TODO
+### 4. Selected character IDs are not scoped to the current user //TODO ✅
 
 `app/api/generate/route.ts` loads characters with `.in('id', selectedCharacterIds)` using admin access, but it does not also filter by `user_id`.
 
