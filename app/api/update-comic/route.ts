@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, createAdminSupabaseClient } from '../../../lib/supabase-server';
+import { createServerSupabaseClient } from '../../../lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PanelData {
@@ -12,7 +12,6 @@ interface PanelData {
 export async function PUT(req: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const adminSupabase = createAdminSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -25,19 +24,19 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'comicId required' }, { status: 400 });
     }
 
-    const { data: existing } = await adminSupabase
+    const { data: existing } = await supabase
       .from('comics')
-      .select('id, user_id')
+      .select('id')
       .eq('id', comicId)
       .single();
 
-    if (!existing || existing.user_id !== user.id) {
+    if (!existing) {
       return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
     }
 
     const coverUrl = panels?.[0]?.image_url || null;
 
-    const { error: updateError } = await adminSupabase
+    const { error: updateError } = await supabase
       .from('comics')
       .update({
         title: title || 'Untitled Comic',
@@ -55,7 +54,7 @@ export async function PUT(req: Request) {
     }
 
     if (panels && panels.length > 0) {
-      await adminSupabase.from('panels').delete().eq('comic_id', comicId);
+      await supabase.from('panels').delete().eq('comic_id', comicId);
 
       const panelsToInsert = (panels as PanelData[]).map((panel, index: number) => ({
         id: uuidv4(),
@@ -67,7 +66,7 @@ export async function PUT(req: Request) {
         panel_index: index,
       }));
 
-      const { error: panelsError } = await adminSupabase.from('panels').insert(panelsToInsert);
+      const { error: panelsError } = await supabase.from('panels').insert(panelsToInsert);
       if (panelsError) {
         console.error('Error updating panels:', panelsError);
         return NextResponse.json({ error: 'Failed to update panels' }, { status: 500 });

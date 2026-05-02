@@ -17,23 +17,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'panelId and prompt required' }, { status: 400 })
     }
 
-    const { data: panel } = await admin
+    const { data: panel } = await supabase
       .from('panels')
       .select('id, comic_id')
       .eq('id', panelId)
       .single()
 
     if (!panel) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-
-    const { data: comic } = await admin
-      .from('comics')
-      .select('user_id')
-      .eq('id', panel.comic_id)
-      .single()
-
-    if (!comic || comic.user_id !== user.id) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 

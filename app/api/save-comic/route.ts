@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, createAdminSupabaseClient } from '../../../lib/supabase-server';
+import { createServerSupabaseClient } from '../../../lib/supabase-server';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PanelData {
@@ -12,7 +12,6 @@ interface PanelData {
 export async function POST(req: Request) {
   try {
     const supabase = await createServerSupabaseClient();
-    const adminSupabase = createAdminSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -29,7 +28,7 @@ export async function POST(req: Request) {
     const comicId = uuidv4();
     const coverUrl = panels[0]?.image_url || null;
 
-    const { error: comicError } = await adminSupabase
+    const { error: comicError } = await supabase
       .from('comics')
       .insert({
         id: comicId,
@@ -58,13 +57,13 @@ export async function POST(req: Request) {
       panel_index: index
     }));
 
-    const { error: panelsError } = await adminSupabase
+    const { error: panelsError } = await supabase
       .from('panels')
       .insert(panelsToInsert);
 
     if (panelsError) {
       console.error('Error saving panels:', panelsError);
-      await adminSupabase.from('comics').delete().eq('id', comicId);
+      await supabase.from('comics').delete().eq('id', comicId);
       return NextResponse.json({ error: 'Failed to save comic panels' }, { status: 500 });
     }
 

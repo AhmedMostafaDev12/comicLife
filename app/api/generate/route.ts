@@ -50,7 +50,7 @@ export async function POST(req: Request) {
           const buffer = await avatarData.arrayBuffer();
           userAvatarBase64 = Buffer.from(buffer).toString('base64');
         } else {
-          const { data: profile } = await adminSupabase.from('users').select('avatar_url').eq('id', user.id).maybeSingle();
+          const { data: profile } = await supabase.from('users').select('avatar_url').eq('id', user.id).maybeSingle();
           if (profile?.avatar_url && profile.avatar_url.startsWith('http')) {
             const imgRes = await fetch(profile.avatar_url);
             if (imgRes.ok) {
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         console.error("Failed to fetch user avatar:", e);
       }
 
-      const { data: profileData } = await adminSupabase.from('users').select('character_description').eq('id', user.id).maybeSingle();
+      const { data: profileData } = await supabase.from('users').select('character_description').eq('id', user.id).maybeSingle();
       if (profileData?.character_description) {
         initialCharacterContext.push(`Main Character: ${profileData.character_description}`);
       }
@@ -211,7 +211,7 @@ ${enhancedStory}
     const panels = [panel0, ...restPanels].map(({ _base64, ...p }) => p);
 
     // 6. SAVE DRAFT COMIC + PANELS TO DB
-    const { error: comicInsertError } = await adminSupabase.from('comics').insert({
+    const { error: comicInsertError } = await supabase.from('comics').insert({
       id: generatedComicId,
       user_id: user.id,
       title: 'Draft Comic',
@@ -236,7 +236,7 @@ ${enhancedStory}
       panel_index: p.order
     }));
 
-    const { error: panelsInsertError } = await adminSupabase.from('panels').insert(panelsToInsert);
+    const { error: panelsInsertError } = await supabase.from('panels').insert(panelsToInsert);
     if (panelsInsertError) {
       console.error('Panels insert failed:', panelsInsertError);
       return NextResponse.json({ error: panelsInsertError.message }, { status: 500 });

@@ -16,18 +16,18 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'comicId required' }, { status: 400 })
     }
 
-    const { data: comic } = await admin
+    const { data: comic } = await supabase
       .from('comics')
-      .select('id, user_id')
+      .select('id')
       .eq('id', comicId)
       .single()
 
-    if (!comic || comic.user_id !== user.id) {
+    if (!comic) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    await admin.from('panels').delete().eq('comic_id', comicId)
-    await admin.from('comics').delete().eq('id', comicId)
+    await supabase.from('panels').delete().eq('comic_id', comicId)
+    await supabase.from('comics').delete().eq('id', comicId)
 
     const { data: files } = await admin.storage.from('panels').list(`panels/${comicId}`)
     if (files && files.length > 0) {

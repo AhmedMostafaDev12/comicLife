@@ -83,7 +83,7 @@ export async function POST(req: Request) {
     // 5. Save Stylized URL to DB — include cache buster so the profile page
     // doesn't serve a stale browser-cached image at the same Supabase path.
     const versionedUrl = `${stylizedUrl}?v=${Date.now()}`;
-    await adminSupabase.from('users').upsert({
+    await supabase.from('users').upsert({
       id: user.id,
       avatar_url: versionedUrl,
       updated_at: new Date().toISOString()

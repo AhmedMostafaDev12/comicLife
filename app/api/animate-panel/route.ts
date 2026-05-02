@@ -32,12 +32,17 @@ export async function POST(req: NextRequest) {
     // 2. Fetch Comic Data for style
     const { data: comic, error: comicError } = await adminSupabase
       .from('comics')
-      .select('style')
+      .select('style, user_id')
       .eq('id', panel.comic_id)
       .maybeSingle();
 
     if (comicError || !comic) {
       console.error("Comic Fetch Error:", comicError);
+      return NextResponse.json({ error: 'Comic not found' }, { status: 404 });
+    }
+
+    if (comic.user_id !== user.id) {
+      return NextResponse.json({ error: 'Panel not found' }, { status: 404 });
     }
 
     const style = comic?.style || 'painterly';
