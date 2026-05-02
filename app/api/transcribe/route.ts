@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
 import { uploadAudio, createTranscript, waitForTranscript } from '../../../lib/assembly';
+import { createServerSupabaseClient } from '../../../lib/supabase-server';
 
 export async function POST(req: Request) {
   try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const audioFile = formData.get('audio') as Blob;
 

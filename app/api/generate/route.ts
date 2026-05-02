@@ -16,7 +16,10 @@ export async function POST(req: Request) {
     const supabase = await createServerSupabaseClient();
     const adminSupabase = createAdminSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
-    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { story, style, selectedCharacterIds = [] } = await req.json();
     if (!story || story.split(/\s+/).filter(Boolean).length < 50) {
       return NextResponse.json({ error: 'Write at least 50 words.' }, { status: 400 });
