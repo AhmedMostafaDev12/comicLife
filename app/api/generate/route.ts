@@ -212,7 +212,7 @@ ${enhancedStory}
     // 6. SAVE DRAFT COMIC + PANELS TO DB
     const { error: comicInsertError } = await adminSupabase.from('comics').insert({
       id: generatedComicId,
-      user_id: user!.id,
+      user_id: user.id,
       title: 'Draft Comic',
       story,
       style: style.startsWith('custom:') ? 'painterly' : style,
@@ -220,7 +220,10 @@ ${enhancedStory}
       cover_url: panels[0].image_url
     });
 
-    if (comicInsertError) throw comicInsertError;
+    if (comicInsertError) {
+      console.error('Comic insert failed:', comicInsertError);
+      return NextResponse.json({ error: comicInsertError.message }, { status: 500 });
+    }
 
     const panelsToInsert = panels.map(p => ({
       id: p.id,
@@ -233,7 +236,10 @@ ${enhancedStory}
     }));
 
     const { error: panelsInsertError } = await adminSupabase.from('panels').insert(panelsToInsert);
-    if (panelsInsertError) throw panelsInsertError;
+    if (panelsInsertError) {
+      console.error('Panels insert failed:', panelsInsertError);
+      return NextResponse.json({ error: panelsInsertError.message }, { status: 500 });
+    }
 
     return NextResponse.json({ comicId: generatedComicId, panels });
   } catch (error: any) {
