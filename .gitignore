@@ -20,6 +20,8 @@
 .DS_Store
 *.pem
 .idea/
+CLAUDE.md
+.planning/
 
 # debug
 npm-debug.log*
