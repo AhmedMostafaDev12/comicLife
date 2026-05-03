@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import DiaryEditor from '../../../components/diary/DiaryEditor'
@@ -11,7 +11,7 @@ import { useComicStore } from '../../../store/useComicStore'
 import { ArtStyle } from '../../../types'
 import { createSupabaseClient } from '../../../lib/supabase'
 
-export default function NewDiaryPage() {
+function NewDiaryPageInner() {
   const {
     currentStep,
     story,
@@ -314,5 +314,13 @@ export default function NewDiaryPage() {
 
       </div>
     </main>
+  )
+}
+
+export default function NewDiaryPage() {
+  return (
+    <Suspense>
+      <NewDiaryPageInner />
+    </Suspense>
   )
 }
