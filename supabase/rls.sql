@@ -25,6 +25,8 @@
 CREATE TABLE IF NOT EXISTS public.users (
   id                    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   username              TEXT,
+  full_name             TEXT,
+  email                 TEXT,
   avatar_url            TEXT,
   character_description TEXT,
   created_at            TIMESTAMPTZ DEFAULT NOW(),
@@ -32,6 +34,8 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS username              TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS full_name             TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email                 TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS avatar_url            TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS character_description TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS created_at            TIMESTAMPTZ DEFAULT NOW();
@@ -46,7 +50,7 @@ CREATE TABLE IF NOT EXISTS public.comics (
   is_draft       BOOLEAN DEFAULT TRUE,
   cover_url      TEXT,
   soundtrack_url TEXT,
-  film_url       TEXT,
+  setting_dna    TEXT,
   created_at     TIMESTAMPTZ DEFAULT NOW(),
   updated_at     TIMESTAMPTZ DEFAULT NOW()
 );
@@ -54,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.comics (
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS title          TEXT;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS cover_url      TEXT;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS soundtrack_url TEXT;
-ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS film_url       TEXT;
+ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS setting_dna    TEXT;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS is_draft       BOOLEAN DEFAULT TRUE;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS created_at     TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMPTZ DEFAULT NOW();
@@ -62,49 +66,42 @@ ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMPTZ DE
 CREATE INDEX IF NOT EXISTS comics_user_id_idx ON public.comics(user_id);
 
 CREATE TABLE IF NOT EXISTS public.panels (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  comic_id     UUID REFERENCES public.comics(id) ON DELETE CASCADE,
-  image_url    TEXT NOT NULL,
-  caption      TEXT,
-  bubbles      JSONB,
-  prompt       TEXT,
-  panel_index  INTEGER NOT NULL,
-  video_url    TEXT,
-  video_status TEXT,
-  created_at   TIMESTAMPTZ DEFAULT NOW()
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  comic_id            UUID REFERENCES public.comics(id) ON DELETE CASCADE,
+  image_url           TEXT NOT NULL,
+  caption             TEXT,
+  bubbles             JSONB,
+  speech_bubble       TEXT,
+  prompt              TEXT,
+  panel_index         INTEGER,
+  reference_image_url TEXT,
+  reference_type      TEXT,
+  video_status        TEXT,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS caption      TEXT;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS bubbles      JSONB;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS prompt       TEXT;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS panel_index  INTEGER;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS video_url    TEXT;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS video_status TEXT;
-ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS created_at   TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS caption             TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS bubbles             JSONB;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS speech_bubble       TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS prompt              TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS panel_index         INTEGER;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS reference_image_url TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS reference_type      TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS video_status        TEXT;
+ALTER TABLE public.panels ADD COLUMN IF NOT EXISTS created_at          TIMESTAMPTZ DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS panels_comic_id_idx ON public.panels(comic_id);
 
 CREATE TABLE IF NOT EXISTS public.characters (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   name        TEXT NOT NULL,
-  description TEXT,
+  description TEXT NOT NULL,
   avatar_url  TEXT,
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS characters_user_id_idx ON public.characters(user_id);
-
-CREATE TABLE IF NOT EXISTS public.film_plans (
-  comic_id        UUID PRIMARY KEY REFERENCES public.comics(id) ON DELETE CASCADE,
-  user_id         UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-  shot_list       JSONB,
-  audio           JSONB,
-  final_video_url TEXT,
-  updated_at      TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS film_plans_user_id_idx ON public.film_plans(user_id);
 
 
 -- ---------------------------------------------------------------------------
@@ -115,16 +112,16 @@ ALTER TABLE public.users      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comics     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.panels     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.characters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.film_plans ENABLE ROW LEVEL SECURITY;
 
 
 -- ---------------------------------------------------------------------------
 -- 3. Drop any pre-existing policies so this script is fully idempotent
 -- ---------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "Users can view own profile"   ON public.users;
-DROP POLICY IF EXISTS "Users can insert own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
+DROP POLICY IF EXISTS "Users can view own profile"     ON public.users;
+DROP POLICY IF EXISTS "Users can select own profile"   ON public.users;
+DROP POLICY IF EXISTS "Users can insert own profile"   ON public.users;
+DROP POLICY IF EXISTS "Users can update own profile"   ON public.users;
 
 DROP POLICY IF EXISTS "Users manage own comics" ON public.comics;
 DROP POLICY IF EXISTS "Users select own comics" ON public.comics;
@@ -139,7 +136,6 @@ DROP POLICY IF EXISTS "Users update panels via comic" ON public.panels;
 DROP POLICY IF EXISTS "Users delete panels via comic" ON public.panels;
 
 DROP POLICY IF EXISTS "Users manage own characters" ON public.characters;
-DROP POLICY IF EXISTS "Users manage own film plans" ON public.film_plans;
 
 
 -- ---------------------------------------------------------------------------
@@ -242,18 +238,7 @@ CREATE POLICY "Users manage own characters"
 
 
 -- ---------------------------------------------------------------------------
--- 8. film_plans — own rows
--- ---------------------------------------------------------------------------
-
-CREATE POLICY "Users manage own film plans"
-  ON public.film_plans
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-
-
--- ---------------------------------------------------------------------------
--- 9. Force RLS even for table owners, and lock down anon/public grants.
+-- 8. Force RLS even for table owners, and lock down anon/public grants.
 --    service_role has BYPASSRLS, so admin-client routes are unaffected.
 -- ---------------------------------------------------------------------------
 
@@ -261,33 +246,30 @@ ALTER TABLE public.users      FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.comics     FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.panels     FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.characters FORCE ROW LEVEL SECURITY;
-ALTER TABLE public.film_plans FORCE ROW LEVEL SECURITY;
 
 REVOKE ALL ON
   public.users,
   public.comics,
   public.panels,
-  public.characters,
-  public.film_plans
+  public.characters
 FROM anon, public;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON
   public.users,
   public.comics,
   public.panels,
-  public.characters,
-  public.film_plans
+  public.characters
 TO authenticated;
 
 
 -- ---------------------------------------------------------------------------
--- 10. Sanity checks (read-only — comment out if Editor complains)
+-- 9. Sanity checks (read-only — comment out if Editor complains)
 -- ---------------------------------------------------------------------------
 
 -- Confirm RLS is enabled on every protected table:
 -- SELECT relname, relrowsecurity
 -- FROM pg_class
--- WHERE relname IN ('users','comics','panels','characters','film_plans')
+-- WHERE relname IN ('users','comics','panels','characters')
 --   AND relnamespace = 'public'::regnamespace;
 
 -- List all policies:
