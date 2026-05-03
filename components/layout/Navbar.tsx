@@ -10,7 +10,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
-  const hideNavbar = pathname.startsWith('/read/') || pathname.startsWith('/film/')
+  const hideNavbar = pathname.startsWith('/read/')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)

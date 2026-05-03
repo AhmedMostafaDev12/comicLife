@@ -1,13 +1,13 @@
 const API_KEY = process.env.ASSEMBLYAI_API_KEY;
 
-export async function uploadAudio(audioData: Buffer | Blob): Promise<string> {
+export async function uploadAudio(audioData: Uint8Array | Blob): Promise<string> {
   const response = await fetch('https://api.assemblyai.com/v2/upload', {
     method: 'POST',
     headers: {
       'Authorization': API_KEY!,
       'Content-Type': 'application/octet-stream'
     },
-    body: audioData
+    body: audioData as BodyInit
   });
 
   if (!response.ok) {

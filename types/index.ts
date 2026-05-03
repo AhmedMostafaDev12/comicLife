@@ -26,7 +26,6 @@ export interface Panel {
   speech_bubble?: string | null
   bubbles?: Bubble[]
   image_url?: string
-  video_url?: string
   prompt_used?: string
   style: string
   mood?: string

@@ -477,12 +477,6 @@ export default function ComicReader() {
           {isExporting ? 'Exporting...' : 'PDF'}
         </button>
         <Link
-          href={`/film/${id}`}
-          className="bg-yellow text-ink font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-full hover:bg-[#c8dc38] transition shadow-2xl"
-        >
-          Make it a film
-        </Link>
-        <Link
           href={`/create?edit=${id}`}
           className="bg-white/10 text-white font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-5 py-2.5 rounded-full hover:bg-white/20 transition shadow-2xl border border-white/10"
         >
