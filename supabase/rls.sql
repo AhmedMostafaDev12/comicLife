@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS username              TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS full_name             TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS avatar_url            TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS character_description TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS created_at            TIMESTAMPTZ DEFAULT NOW();

@@ -27,6 +27,7 @@ function NewDiaryPageInner() {
   } = useComicStore()
 
   const [isPublishing, setIsPublishing] = useState(false)
+  const [profileIncomplete, setProfileIncomplete] = useState(false)
   const [availableCharacters, setAvailableCharacters] = useState<any[]>([])
   const [selectedCharIds, setSelectedCharacterIds] = useState<string[]>([])
   const [loadingEdit, setLoadingEdit] = useState(false)
@@ -79,6 +80,15 @@ function NewDiaryPageInner() {
     async function fetchCast() {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('full_name')
+          .eq('id', user.id)
+          .single()
+        if (!profileData?.full_name) {
+          setProfileIncomplete(true)
+          return
+        }
         const { data } = await supabase.from('characters').select('*').eq('user_id', user.id)
         setAvailableCharacters(data || [])
       }
@@ -168,6 +178,18 @@ function NewDiaryPageInner() {
       <main className="min-h-screen bg-cream flex flex-col items-center justify-center gap-6 mt-[64px]">
         <div className="w-12 h-12 border-4 border-yellow border-t-transparent rounded-full animate-spin" />
         <p className="font-mono text-ink text-[11px] uppercase tracking-widest">Loading comic for editing...</p>
+      </main>
+    )
+  }
+
+  if (profileIncomplete) {
+    return (
+      <main className="min-h-screen bg-cream flex flex-col items-center justify-center gap-6 px-6 mt-[64px]">
+        <h2 className="font-barlow font-black text-3xl md:text-4xl uppercase text-ink text-center">Complete your profile first</h2>
+        <p className="font-dm text-muted text-center max-w-sm">We need your name before you can create a comic.</p>
+        <Link href="/profile" className="bg-yellow text-ink font-mono text-[11px] font-bold uppercase px-8 py-4 rounded-full hover:bg-[#c8dc38] transition">
+          GO TO PROFILE →
+        </Link>
       </main>
     )
   }

@@ -60,8 +60,6 @@ export default function Navbar() {
             <NavLink href="/dashboard" label="DASHBOARD" />
             <span className="text-white/20 font-mono text-[11px]">—</span>
             <NavLink href="/profile" label="PROFILE" />
-            <span className="text-white/20 font-mono text-[11px]">—</span>
-            <Link href="#" className="font-mono text-[11px] tracking-[0.1em] text-white/60 hover:text-white transition-colors">FAQ</Link>
           </>
         ) : (
           <Link href="/#examples" className="font-mono text-[11px] tracking-[0.1em] text-white/60 hover:text-yellow transition-colors">

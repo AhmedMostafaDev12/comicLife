@@ -9,7 +9,6 @@ export default function AvatarCreator() {
   const [status, setStatus] = useState<'idle' | 'uploading' | 'generating' | 'done'>('idle')
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [generatedAvatar, setGeneratedAvatar] = useState<string | null>(null)
-  const [baseDescription, setBaseDescription] = useState('')
   const [customStylePreview, setCustomStylePreview] = useState<string | null>(null)
   const [customStyleFile, setCustomStyleFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -17,22 +16,6 @@ export default function AvatarCreator() {
   const supabase = createSupabaseClient()
   
   const { setAvatar } = useSessionStore()
-
-  // Fetch current description to maintain consistency
-  useEffect(() => {
-    async function fetchCurrentProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data } = await supabase
-          .from('users')
-          .select('character_description')
-          .eq('id', user.id)
-          .single()
-        if (data) setBaseDescription(data.character_description || '')
-      }
-    }
-    fetchCurrentProfile()
-  }, [supabase])
 
   const STYLES = [
     { id: 'painterly', name: 'Painterly', image: '/images/landing/anime_1_stylr.jpg' },
@@ -72,7 +55,6 @@ export default function AvatarCreator() {
     const formData = new FormData()
     formData.append('avatar', fileInputRef.current.files[0])
     formData.append('style', style)
-    formData.append('base_description', baseDescription)
     if (style === 'custom' && customStyleFile) {
       formData.append('style_reference', customStyleFile)
     }
