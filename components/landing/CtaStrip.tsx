@@ -10,9 +10,9 @@ export default function CtaStrip() {
         </h2>
 
         <div className="flex items-center gap-4">
-          <Link 
-            href="/dashboard" 
-            className="border border-white/25 text-white font-mono text-[11px] tracking-[.08em] uppercase px-6 py-3 rounded-full transition hover:border-white whitespace-nowrap"
+          <Link
+            href="/#examples"
+            className="border border-white/60 text-white font-mono text-[11px] font-bold tracking-[.08em] uppercase px-6 py-3 rounded-full transition hover:bg-white hover:text-ink whitespace-nowrap"
           >
             SEE EXAMPLES
           </Link>

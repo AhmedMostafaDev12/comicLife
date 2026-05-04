@@ -111,7 +111,7 @@ const StyleCard = ({ card }: { card: StyleCardData }) => (
 
 export default function StyleSection() {
   return (
-    <section className="relative w-full min-h-screen overflow-hidden flex items-center">
+    <section id="examples" className="relative w-full min-h-screen overflow-hidden flex items-center">
 
       {/* Background image — fills entire section */}
       <Image
