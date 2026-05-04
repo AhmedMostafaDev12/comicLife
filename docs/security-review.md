@@ -44,7 +44,7 @@ Impact: if a user obtains another character ID, they can pull that character's n
 
 ### 5. Public storage buckets expose user media by URL //Check if this actually happens
 
-`SETUP.md` instructs creating public `avatars` and `panels` buckets. The app stores original avatars, stylized avatars, generated panels, video shots, narration, and final videos with public URLs.
+[`setup.md`](./setup.md) instructs creating public `avatars` and `panels` buckets. The app stores original avatars, stylized avatars, generated panels, video shots, narration, and final videos with public URLs.
 
 Impact: anyone with the URL can view private diary-derived images or videos. For this app's domain, assume generated media is private unless product requirements explicitly say otherwise.
 

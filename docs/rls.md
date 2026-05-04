@@ -1,4 +1,4 @@
-# RLS (Row-Level Security) — Reference for comicLife
+# RLS (Row-Level Security) — Reference for ComicLife
 
 This is a quick-reference guide for how Row-Level Security works, the types of policies, how Supabase layers them, and exactly which policies exist in this project.
 
@@ -162,7 +162,7 @@ The buckets used by this project:
 1. The admin client is the only path to storage — if a route uses it without an ownership check first, exploitable
 2. Any future direct-from-client uploads won't work without policies
 
-**Fix:** see [`storage-policies.sql`](./storage-policies.sql) in this folder. Apply it via Supabase Dashboard → SQL Editor → New query → Run. After that, the storage operations in the routes can be swapped from `admin.storage` → `supabase.storage`.
+**Fix:** add a `storage-policies.sql` migration alongside [`../supabase/rls.sql`](../supabase/rls.sql) and apply it via Supabase Dashboard → SQL Editor → New query → Run. After that, the storage operations in the routes can be swapped from `admin.storage` → `supabase.storage`.
 
 ---
 
@@ -203,6 +203,7 @@ Before shipping or after schema changes, verify:
 
 ## See also
 
-- [`storage-policies.sql`](./storage-policies.sql) — SQL to apply the bucket policies described above
+- [`../supabase/rls.sql`](../supabase/rls.sql) — the table schema + RLS policies applied to this project
+- [`security-review.md`](./security-review.md) — outstanding security issues (rate limits, service-role usage, public buckets)
 - Supabase docs: <https://supabase.com/docs/guides/database/postgres/row-level-security>
 - Postgres docs: <https://www.postgresql.org/docs/current/sql-createpolicy.html>

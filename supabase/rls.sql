@@ -11,7 +11,7 @@
 --       (a) routes that use createServerSupabaseClient() (user-scoped JWT)
 --       (b) any future client-side reads/writes via the anon key
 --   * Storage policies are intentionally NOT included — buckets are still
---     `Public` per SETUP.md, server uses the admin client for storage I/O,
+--     `Public` per docs/setup.md, server uses the admin client for storage I/O,
 --     and tightening storage now would not block leaks (URLs are public)
 --     while it could break legitimate flows. Make buckets private first,
 --     then add storage policies in a separate migration.
