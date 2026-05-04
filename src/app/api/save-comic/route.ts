@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { story, style, panels, title, soundtrackUrl } = await req.json();
+    const { story, style, panels, title, soundtrackUrl, comicType, folderId } = await req.json();
 
     if (!story || !panels || panels.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -38,7 +38,9 @@ export async function POST(req: Request) {
         style,
         soundtrack_url: soundtrackUrl,
         is_draft: false,
-        cover_url: coverUrl
+        cover_url: coverUrl,
+        comic_type: comicType || 'diary',
+        folder_id: folderId || null
       });
 
     if (comicError) {

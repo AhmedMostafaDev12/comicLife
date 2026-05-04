@@ -36,6 +36,8 @@ function NewDiaryPageInner() {
   const supabase = useMemo(() => createSupabaseClient(), [])
 
   const editId = searchParams.get('edit')
+  const comicType = searchParams.get('type') || 'diary'
+  const folderId = searchParams.get('folder') || null
 
   useEffect(() => {
     if (!editId) return
@@ -145,7 +147,9 @@ function NewDiaryPageInner() {
           style: selectedStyle,
           panels,
           title: story.replace(/<[^>]*>/g, '').slice(0, 30) + '...',
-          soundtrackUrl: null
+          soundtrackUrl: null,
+          comicType,
+          folderId
         })
       })
       if (!response.ok) throw new Error('Publish failed')
@@ -327,7 +331,7 @@ function NewDiaryPageInner() {
               </div>
               <div className="mt-6 flex flex-col gap-3">
                 <button onClick={handlePublish} disabled={isPublishing || panels.length === 0} className="w-full bg-yellow disabled:opacity-50 text-ink font-mono text-[11px] font-bold tracking-wider uppercase py-4 rounded-full hover:bg-[#c8dc38] transition">
-                  {isPublishing ? 'SAVING...' : editingComicId ? 'UPDATE COMIC' : 'PUBLISH COMIC'}
+                  {isPublishing ? 'SAVING...' : editingComicId ? 'UPDATE COMIC' : 'SAVE COMIC'}
                 </button>
               </div>
             </div>

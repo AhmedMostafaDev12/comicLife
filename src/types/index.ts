@@ -127,6 +127,8 @@ export interface Comic {
   is_draft: boolean
   cover_url?: string | null
   soundtrack_url?: string | null
+  comic_type?: 'diary' | 'highlight' | 'custom'
+  folder_id?: string | null
   created_at: string
   updated_at: string
 }

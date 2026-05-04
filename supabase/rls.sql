@@ -41,6 +41,19 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS character_description TEXT;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS created_at            TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS updated_at            TIMESTAMPTZ DEFAULT NOW();
 
+CREATE TABLE IF NOT EXISTS public.folders (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  name       TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.folders ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users manage own folders" ON public.folders;
+CREATE POLICY "Users manage own folders"
+  ON public.folders FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
 CREATE TABLE IF NOT EXISTS public.comics (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID REFERENCES public.users(id) ON DELETE CASCADE,
@@ -62,6 +75,8 @@ ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS setting_dna    TEXT;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS is_draft       BOOLEAN DEFAULT TRUE;
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS created_at     TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS updated_at     TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS comic_type     TEXT DEFAULT 'diary';
+ALTER TABLE public.comics ADD COLUMN IF NOT EXISTS folder_id      UUID REFERENCES public.folders(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS comics_user_id_idx ON public.comics(user_id);
 

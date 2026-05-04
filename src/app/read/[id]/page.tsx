@@ -557,19 +557,26 @@ export default function ComicReader() {
 
         </div>
 
-        {/* Navigation below book */}
-        <div className="flex items-center justify-between mt-6 px-2">
-          <button
-            onClick={goPrev}
-            disabled={currentPage === 0}
-            className="font-mono text-[11px] text-white/40 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed uppercase tracking-widest transition px-4 py-2"
-          >
-            &larr; Prev
-          </button>
+        {/* Fixed side nav arrows — vertically centered on screen */}
+        <button
+          onClick={goPrev}
+          disabled={currentPage === 0}
+          className="fixed left-4 top-1/2 -translate-y-1/2 z-50 w-11 h-11 flex items-center justify-center bg-ink/70 text-white rounded-full disabled:opacity-20 hover:bg-ink transition backdrop-blur-sm text-lg"
+        >
+          ←
+        </button>
+        <button
+          onClick={goNext}
+          disabled={currentPage === totalPages - 1}
+          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 w-11 h-11 flex items-center justify-center bg-ink/70 text-white rounded-full disabled:opacity-20 hover:bg-ink transition backdrop-blur-sm text-lg"
+        >
+          →
+        </button>
 
-          {/* Progress indicator */}
+        {/* Progress indicator below book */}
+        <div className="flex items-center justify-center mt-6 px-2">
           {totalPages <= 16 ? (
-            <div className="flex items-center gap-1.5 max-w-[60%] flex-wrap justify-center">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               {Array.from({ length: totalPages }).map((_, i) => (
                 <button
                   key={i}
@@ -583,7 +590,7 @@ export default function ComicReader() {
               ))}
             </div>
           ) : (
-            <div className="flex-1 max-w-[50%] mx-4">
+            <div className="w-[200px]">
               <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-yellow rounded-full transition-all duration-300"
@@ -592,14 +599,6 @@ export default function ComicReader() {
               </div>
             </div>
           )}
-
-          <button
-            onClick={goNext}
-            disabled={currentPage === totalPages - 1}
-            className="font-mono text-[11px] text-white/40 hover:text-white disabled:opacity-20 disabled:cursor-not-allowed uppercase tracking-widest transition px-4 py-2"
-          >
-            Next &rarr;
-          </button>
         </div>
       </div>
 

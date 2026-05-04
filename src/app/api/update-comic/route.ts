@@ -18,7 +18,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { comicId, story, style, panels, title, soundtrackUrl } = await req.json();
+    const { comicId, story, style, panels, title, soundtrackUrl, comicType, folderId } = await req.json();
 
     if (!comicId) {
       return NextResponse.json({ error: 'comicId required' }, { status: 400 });
@@ -45,6 +45,8 @@ export async function PUT(req: Request) {
         soundtrack_url: soundtrackUrl,
         cover_url: coverUrl,
         updated_at: new Date().toISOString(),
+        ...(comicType && { comic_type: comicType }),
+        ...(folderId !== undefined && { folder_id: folderId || null }),
       })
       .eq('id', comicId);
 
