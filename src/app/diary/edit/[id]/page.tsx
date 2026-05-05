@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import DiaryEditor from '@/components/diary/DiaryEditor'
 import StylePicker from '@/components/diary/StylePicker'
 import ComicGrid from '@/components/comic/ComicGrid'
 import { createSupabaseClient } from '@/lib/supabase'
-import { ArtStyle, Panel } from '@/types'
+import { useComicStore } from '@/store/useComicStore'
+import { ArtStyle } from '@/types'
 
 type EditTab = 'panels' | 'story' | 'style'
 
@@ -16,19 +17,33 @@ export default function EditComicPage() {
   const router = useRouter()
   const supabase = useMemo(() => createSupabaseClient(), [])
 
+  const { panels, story, selectedStyle, setPanels, setStory, setStyle, reset } = useComicStore()
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState<EditTab>('panels')
-
   const [title, setTitle] = useState('')
   const [editingTitle, setEditingTitle] = useState(false)
-  const [story, setStory] = useState('')
-  const [style, setStyle] = useState<ArtStyle>('manga')
-  const [panels, setPanels] = useState<Panel[]>([])
   const [availableCharacters, setAvailableCharacters] = useState<any[]>([])
   const [selectedCharIds, setSelectedCharIds] = useState<string[]>([])
 
+  // Refs for change detection — set once on mount, never mutated
+  const loadedStory = useRef('')
+  const loadedCharIds = useRef<string[]>([])
+
+  // Smart regeneration state
+  const [affectedPanelIds, setAffectedPanelIds] = useState<string[] | null>(null)
+  const [detecting, setDetecting] = useState(false)
+
+  const storyChanged = story !== loadedStory.current
+  const castChanged =
+    JSON.stringify([...selectedCharIds].sort()) !==
+    JSON.stringify([...loadedCharIds.current].sort())
+  const hasChanges = storyChanged || castChanged
+
   useEffect(() => {
+    reset()
+
     async function load() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -42,11 +57,7 @@ export default function EditComicPage() {
 
         if (!comic) { router.push('/dashboard'); return }
 
-        setTitle(comic.title || '')
-        setStory(comic.story || '')
-        setStyle((comic.style as ArtStyle) || 'manga')
-        setAvailableCharacters(chars || [])
-        setPanels((panelsData || []).map((p: any) => ({
+        const loadedPanels = (panelsData || []).map((p: any) => ({
           id: p.id,
           order: p.panel_index,
           caption: p.caption,
@@ -55,7 +66,16 @@ export default function EditComicPage() {
           style: comic.style,
           speech_bubble: p.speech_bubble,
           bubbles: p.bubbles,
-        })))
+        }))
+
+        setTitle(comic.title || '')
+        setStory(comic.story || '')
+        setStyle((comic.style as ArtStyle) || 'manga')
+        setPanels(loadedPanels)
+        setAvailableCharacters(chars || [])
+
+        loadedStory.current = comic.story || ''
+        loadedCharIds.current = []
       } catch (err) {
         console.error('Failed to load comic:', err)
         router.push('/dashboard')
@@ -64,7 +84,14 @@ export default function EditComicPage() {
       }
     }
     load()
-  }, [id, router, supabase])
+
+    return () => { reset() }
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Clear detection result whenever story or cast changes
+  useEffect(() => {
+    setAffectedPanelIds(null)
+  }, [story, selectedCharIds])
 
   const handleSave = async () => {
     setSaving(true)
@@ -72,7 +99,7 @@ export default function EditComicPage() {
       const res = await fetch('/api/update-comic', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comicId: id, title, story, style, panels }),
+        body: JSON.stringify({ comicId: id, title, story, style: selectedStyle, panels }),
       })
       if (!res.ok) throw new Error('Save failed')
       router.push(`/read/${id}`)
@@ -80,6 +107,30 @@ export default function EditComicPage() {
       alert(`Failed to save: ${err.message}`)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const detectChanges = async () => {
+    setDetecting(true)
+    try {
+      const res = await fetch('/api/detect-panel-changes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          storyBefore: loadedStory.current,
+          storyAfter: story,
+          panels: panels.map(p => ({ id: p.id, caption: p.caption, prompt_used: p.prompt_used })),
+          castBefore: loadedCharIds.current,
+          castAfter: selectedCharIds,
+        }),
+      })
+      const data = await res.json()
+      setAffectedPanelIds(data.affectedPanelIds || [])
+    } catch (err) {
+      console.error('Detection failed:', err)
+      setAffectedPanelIds([])
+    } finally {
+      setDetecting(false)
     }
   }
 
@@ -166,14 +217,49 @@ export default function EditComicPage() {
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2">
               <div>
                 <h2 className="font-barlow font-black text-2xl uppercase text-ink mb-1">Edit Panels</h2>
-                <p className="font-dm text-sm text-muted">Edit speech bubbles and captions. Use regenerate to redo individual panels.</p>
+                <p className="font-dm text-sm text-muted">Drag speech bubbles to reposition. Use Regenerate on individual panels to redo them.</p>
               </div>
+
+              {/* CHANGE DETECTION BANNER */}
+              {hasChanges && (
+                <div className={`flex items-center justify-between gap-4 px-5 py-4 rounded-[12px] border ${
+                  affectedPanelIds === null
+                    ? 'bg-yellow/10 border-yellow/50'
+                    : affectedPanelIds.length > 0
+                      ? 'bg-orange-50 border-orange-300'
+                      : 'bg-green-50 border-green-300'
+                }`}>
+                  <span className="font-dm text-sm text-ink">
+                    {affectedPanelIds === null
+                      ? 'Story or cast has changed — some panels may be outdated.'
+                      : affectedPanelIds.length > 0
+                        ? `${affectedPanelIds.length} panel${affectedPanelIds.length > 1 ? 's' : ''} need regeneration (highlighted below).`
+                        : 'No panels affected by your changes.'}
+                  </span>
+                  {affectedPanelIds === null && (
+                    <button
+                      onClick={detectChanges}
+                      disabled={detecting}
+                      className="shrink-0 bg-yellow disabled:opacity-50 text-ink font-mono text-[10px] font-bold uppercase px-5 py-2.5 rounded-full hover:bg-[#c8dc38] transition flex items-center gap-2"
+                    >
+                      {detecting
+                        ? <><div className="w-3 h-3 border-2 border-ink border-t-transparent rounded-full animate-spin" /> ANALYZING...</>
+                        : 'FIND AFFECTED PANELS'}
+                    </button>
+                  )}
+                </div>
+              )}
+
               {panels.length === 0 ? (
                 <div className="border-2 border-dashed border-ink/10 rounded-card p-12 text-center">
                   <span className="font-barlow font-bold text-xl uppercase text-ink/30">No panels found</span>
                 </div>
               ) : (
-                <ComicGrid panels={panels} editable={true} />
+                <ComicGrid
+                  panels={panels}
+                  editable={true}
+                  highlightedPanelIds={affectedPanelIds ?? []}
+                />
               )}
             </div>
           )}
@@ -183,7 +269,7 @@ export default function EditComicPage() {
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 max-w-3xl">
               <div>
                 <h2 className="font-barlow font-black text-2xl uppercase text-ink mb-1">Edit Story</h2>
-                <p className="font-dm text-sm text-muted">Changes to the story won&apos;t auto-regenerate panels — go to Panels tab to regenerate individually.</p>
+                <p className="font-dm text-sm text-muted">Changes here won&apos;t auto-regenerate panels — go to Panels tab to regenerate individually.</p>
               </div>
               <DiaryEditor content={story} onChange={setStory} />
             </div>
@@ -223,7 +309,7 @@ export default function EditComicPage() {
 
               <div className="flex flex-col gap-4">
                 <h3 className="font-mono text-[10px] uppercase text-ink/40 tracking-widest">Visual Style</h3>
-                <StylePicker selected={style} onChange={(s) => setStyle(s as ArtStyle)} />
+                <StylePicker selected={selectedStyle} onChange={(s) => setStyle(s as ArtStyle)} />
               </div>
             </div>
           )}

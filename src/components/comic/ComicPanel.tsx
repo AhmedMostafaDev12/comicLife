@@ -6,14 +6,15 @@ import BubbleOverlay from './BubbleOverlay'
 interface ComicPanelProps {
   panel: Panel
   editable?: boolean
+  highlighted?: boolean
   index: number
   onUpdate?: (id: string, updates: Partial<Panel>) => void
   onRegenerate?: (id: string) => void
 }
 
-export default function ComicPanel({ panel, editable, index, onUpdate, onRegenerate }: ComicPanelProps) {
+export default function ComicPanel({ panel, editable, highlighted = false, index, onUpdate, onRegenerate }: ComicPanelProps) {
   return (
-    <div className="relative w-full rounded-[8px] overflow-hidden border border-white/10 bg-ink/10 flex flex-col group">
+    <div className={`relative w-full rounded-[8px] overflow-hidden flex flex-col group border-2 transition-all ${highlighted ? 'border-yellow shadow-[0_0_0_2px_rgba(212,220,56,0.4)]' : 'border-white/10'} bg-ink/10`}>
       {/* Image Area */}
       <div className="aspect-[4/3] bg-ink/20 relative w-full">
         {panel.image_url ? (

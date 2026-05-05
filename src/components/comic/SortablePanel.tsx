@@ -10,17 +10,19 @@ interface SortablePanelProps {
   index: number
   editable: boolean
   isWide: boolean
+  highlighted?: boolean
   onUpdate: (id: string, updates: Partial<Panel>) => void
   onRegenerate: (id: string) => void
 }
 
-export default function SortablePanel({ 
-  panel, 
-  index, 
-  editable, 
+export default function SortablePanel({
+  panel,
+  index,
+  editable,
   isWide,
+  highlighted = false,
   onUpdate,
-  onRegenerate 
+  onRegenerate
 }: SortablePanelProps) {
   const {
     attributes,
@@ -56,10 +58,11 @@ export default function SortablePanel({
             </svg>
           </div>
         )}
-        <ComicPanel 
-          panel={panel} 
-          index={index} 
-          editable={editable} 
+        <ComicPanel
+          panel={panel}
+          index={index}
+          editable={editable}
+          highlighted={highlighted}
           onUpdate={onUpdate}
           onRegenerate={onRegenerate}
         />

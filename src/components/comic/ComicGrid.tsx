@@ -22,9 +22,10 @@ import { useComicStore } from '@/store/useComicStore'
 interface ComicGridProps {
   panels: Panel[]
   editable?: boolean
+  highlightedPanelIds?: string[]
 }
 
-export default function ComicGrid({ panels, editable = false }: ComicGridProps) {
+export default function ComicGrid({ panels, editable = false, highlightedPanelIds = [] }: ComicGridProps) {
   const { setPanels, updatePanel } = useComicStore()
   
   const sensors = useSensors(
@@ -94,12 +95,13 @@ export default function ComicGrid({ panels, editable = false }: ComicGridProps) 
           {panels.map((panel, i) => {
             const isWide = i % 3 === 0
             return (
-              <SortablePanel 
-                key={panel.id} 
-                panel={panel} 
-                index={i} 
+              <SortablePanel
+                key={panel.id}
+                panel={panel}
+                index={i}
                 editable={editable}
                 isWide={isWide}
+                highlighted={highlightedPanelIds.includes(panel.id)}
                 onUpdate={handleUpdate}
                 onRegenerate={handleRegenerate}
               />
