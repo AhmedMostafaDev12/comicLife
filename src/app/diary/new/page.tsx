@@ -24,6 +24,7 @@ function NewDiaryPageInner() {
     setPanels,
     setEditingComicId,
     setGenerating,
+    reset,
   } = useComicStore()
 
   const [isPublishing, setIsPublishing] = useState(false)
@@ -154,7 +155,7 @@ function NewDiaryPageInner() {
       })
       if (!response.ok) throw new Error('Publish failed')
       const data = await response.json()
-      setEditingComicId(null)
+      reset()
       router.push(`/read/${data.comicId}`)
     } catch (error: any) {
       alert(`Failed to publish: ${error.message}`)

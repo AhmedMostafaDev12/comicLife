@@ -34,20 +34,18 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Not found or unauthorized' }, { status: 404 });
     }
 
-    const coverUrl = panels?.[0]?.image_url || null;
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (title !== undefined) updates.title = title || 'Untitled Comic'
+    if (story !== undefined) updates.story = story
+    if (style !== undefined) updates.style = style
+    if (soundtrackUrl !== undefined) updates.soundtrack_url = soundtrackUrl
+    if (panels !== undefined) updates.cover_url = panels?.[0]?.image_url || null
+    if (comicType) updates.comic_type = comicType
+    if (folderId !== undefined) updates.folder_id = folderId || null
 
     const { error: updateError } = await supabase
       .from('comics')
-      .update({
-        title: title || 'Untitled Comic',
-        story,
-        style,
-        soundtrack_url: soundtrackUrl,
-        cover_url: coverUrl,
-        updated_at: new Date().toISOString(),
-        ...(comicType && { comic_type: comicType }),
-        ...(folderId !== undefined && { folder_id: folderId || null }),
-      })
+      .update(updates)
       .eq('id', comicId);
 
     if (updateError) {

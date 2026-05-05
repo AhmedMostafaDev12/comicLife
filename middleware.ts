@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Protect internal routes
-  const isProtected = ['/dashboard', '/diary/new', '/avatar', '/profile'].some(path =>
+  const isProtected = ['/dashboard', '/diary', '/avatar', '/profile'].some(path =>
     request.nextUrl.pathname.startsWith(path)
   )
 

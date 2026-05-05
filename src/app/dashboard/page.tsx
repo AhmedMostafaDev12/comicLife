@@ -27,7 +27,16 @@ function groupByWeek(comics: Comic[]): Record<string, Comic[]> {
   }, {} as Record<string, Comic[]>)
 }
 
-function ComicCard({ comic, onDelete, deleting }: { comic: Comic; onDelete: (id: string, title: string) => void; deleting: string | null }) {
+function ComicCard({ comic, onDelete, onRename, deleting, renamingId, renameValue, setRenamingId, setRenameValue }: {
+  comic: Comic
+  onDelete: (id: string, title: string) => void
+  onRename: (id: string, title: string) => void
+  deleting: string | null
+  renamingId: string | null
+  renameValue: string
+  setRenamingId: (id: string | null) => void
+  setRenameValue: (v: string) => void
+}) {
   return (
     <div className="group flex flex-col gap-4">
       <Link href={`/read/${comic.id}`} className="block">
@@ -47,12 +56,32 @@ function ComicCard({ comic, onDelete, deleting }: { comic: Comic; onDelete: (id:
         </div>
       </Link>
       <div className="flex items-start justify-between gap-2 px-1">
-        <div className="flex flex-col gap-1 min-w-0">
-          <h3 className="font-barlow font-bold text-xl uppercase tracking-tight text-ink group-hover:text-yellow transition-colors truncate">{comic.title}</h3>
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          {renamingId === comic.id ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={e => setRenameValue(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') onRename(comic.id, renameValue)
+                if (e.key === 'Escape') setRenamingId(null)
+              }}
+              onBlur={() => onRename(comic.id, renameValue)}
+              className="font-barlow font-bold text-xl uppercase tracking-tight text-ink bg-white border border-yellow rounded-lg px-2 py-0.5 outline-none w-full"
+            />
+          ) : (
+            <h3
+              onClick={() => { setRenamingId(comic.id); setRenameValue(comic.title) }}
+              className="font-barlow font-bold text-xl uppercase tracking-tight text-ink hover:text-yellow transition-colors truncate cursor-text"
+              title="Click to rename"
+            >
+              {comic.title}
+            </h3>
+          )}
           <span className="font-mono text-[10px] text-muted uppercase">{new Date(comic.created_at).toLocaleDateString()}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Link href={`/diary/new?edit=${comic.id}`} className="border border-ink/20 text-ink font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full hover:bg-yellow hover:border-yellow transition">Edit</Link>
+          <Link href={`/diary/edit/${comic.id}`} className="border border-ink/20 text-ink font-mono text-[9px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full hover:bg-yellow hover:border-yellow transition">Edit</Link>
           <button
             onClick={() => onDelete(comic.id, comic.title)}
             disabled={deleting === comic.id}
@@ -81,6 +110,8 @@ function SectionHeader({ title, count, action }: { title: string; count: number;
 export default function Dashboard() {
   const [comics, setComics] = useState<Comic[]>([])
   const [folders, setFolders] = useState<Folder[]>([])
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [expandedFolder, setExpandedFolder] = useState<string | null>(null)
@@ -100,6 +131,22 @@ export default function Dashboard() {
       alert(`Failed to delete: ${err.message}`)
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handleRename = async (comicId: string, newTitle: string) => {
+    if (!newTitle.trim()) { setRenamingId(null); return }
+    setRenamingId(null)
+    try {
+      const res = await fetch('/api/update-comic', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comicId, title: newTitle.trim() })
+      })
+      if (!res.ok) throw new Error('Rename failed')
+      setComics(prev => prev.map(c => c.id === comicId ? { ...c, title: newTitle.trim() } : c))
+    } catch (err: any) {
+      console.error(err)
     }
   }
 
@@ -204,7 +251,7 @@ export default function Dashboard() {
                         <span className="font-mono text-[10px] text-muted">{weekComics.length}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {weekComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} deleting={deleting} />)}
+                        {weekComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} onRename={handleRename} deleting={deleting} renamingId={renamingId} renameValue={renameValue} setRenamingId={setRenamingId} setRenameValue={setRenameValue} />)}
                       </div>
                     </div>
                   ))}
@@ -232,7 +279,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {highlightComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} deleting={deleting} />)}
+                  {highlightComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} onRename={handleRename} deleting={deleting} renamingId={renamingId} renameValue={renameValue} setRenamingId={setRenamingId} setRenameValue={setRenameValue} />)}
                 </div>
               )}
             </section>
@@ -304,7 +351,7 @@ export default function Dashboard() {
                               <p className="font-dm text-sm text-muted italic px-2">No comics in this folder yet.</p>
                             ) : (
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {folderComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} deleting={deleting} />)}
+                                {folderComics.map(comic => <ComicCard key={comic.id} comic={comic} onDelete={handleDelete} onRename={handleRename} deleting={deleting} renamingId={renamingId} renameValue={renameValue} setRenamingId={setRenamingId} setRenameValue={setRenameValue} />)}
                               </div>
                             )}
                           </div>
