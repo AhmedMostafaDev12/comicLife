@@ -29,12 +29,31 @@ To skip email confirmation while working on localhost:
 
 ---
 
-## 2. Google AI Setup (Gemini & Imagen)
+## 2. AI Image Provider Setup
 
+### Gemini (default)
 1. Go to [Google AI Studio](https://aistudio.google.com/).
 2. Click **Get API Key** and create a new key.
 3. **Important:** To use **Imagen 3** (Image Generation), you must have billing enabled in your Google Cloud Project or be in a region that supports the Imagen API via AI Studio.
 4. Copy the key and paste it as `GEMINI_API_KEY` in `.env.local`.
+5. Leave `IMAGE_PROVIDER=gemini` or omit it entirely to keep Gemini image generation as the default.
+
+### OpenAI GPT Image 2 (optional experiment)
+1. Keep `GEMINI_API_KEY` configured. ComicLife still uses Gemini for story parsing, custom style analysis, and character description.
+2. Add your OpenAI key as `OPENAI_API_KEY` in `.env.local`.
+3. Set `IMAGE_PROVIDER=openai` to route image output through GPT Image 2.
+4. Optional image settings:
+
+```bash
+IMAGE_PROVIDER=gemini
+OPENAI_API_KEY=
+OPENAI_IMAGE_MODEL=gpt-image-2
+OPENAI_IMAGE_SIZE=1024x1024
+OPENAI_IMAGE_QUALITY=medium
+OPENAI_IMAGE_OUTPUT_FORMAT=webp
+```
+
+`OPENAI_API_KEY` is server-only. Never prefix it with `NEXT_PUBLIC_`.
 
 ---
 

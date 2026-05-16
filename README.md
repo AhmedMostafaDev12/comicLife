@@ -16,7 +16,7 @@
 | Drag & drop | @dnd-kit |
 | Image processing | Sharp |
 | Auth / DB / Storage | Supabase |
-| AI text + images | Google Gemini (`@google/generative-ai`) — story parsing and panel generation with the user's photo as a direct reference image |
+| AI text + images | Google Gemini (`@google/generative-ai`) for story/vision work, plus selectable Gemini or OpenAI GPT Image 2 image generation |
 | Audio transcription | AssemblyAI |
 | Music | Spotify API (optional) |
 
@@ -35,10 +35,16 @@ Required environment variables in `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `GEMINI_API_KEY`
+- `IMAGE_PROVIDER` (`gemini` by default, or `openai`)
+- `OPENAI_API_KEY` (required only when `IMAGE_PROVIDER=openai`)
+- `OPENAI_IMAGE_MODEL` (optional, defaults to `gpt-image-2`)
+- `OPENAI_IMAGE_SIZE` (optional, defaults to `1024x1024`)
+- `OPENAI_IMAGE_QUALITY` (optional, defaults to `medium`)
+- `OPENAI_IMAGE_OUTPUT_FORMAT` (optional, defaults to `webp`)
 - `ASSEMBLYAI_API_KEY` (for transcription)
 - `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` (optional)
 
-Full setup walkthrough — Supabase project, schema, storage buckets, Gemini key, Spotify — is in [`docs/setup.md`](./docs/setup.md).
+Full setup walkthrough — Supabase project, schema, storage buckets, Gemini/OpenAI keys, Spotify — is in [`docs/setup.md`](./docs/setup.md).
 
 ---
 
