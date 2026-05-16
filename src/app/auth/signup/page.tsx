@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -11,8 +11,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const supabase = createSupabaseClient()
+  const supabase = useMemo(() => createSupabaseClient(), [])
   const router = useRouter()
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -39,8 +38,7 @@ export default function SignupPage() {
       if (data.session) {
         router.push('/dashboard')
       } else {
-        setSuccess(true)
-        setLoading(false)
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`)
       }
     }
   }
@@ -58,67 +56,53 @@ export default function SignupPage() {
           </div>
         )}
 
-        {success ? (
-          <div className="text-center py-8">
-            <h2 className="font-dm font-bold text-ink mb-2 text-lg">Check your email!</h2>
-            <p className="font-dm text-muted text-sm px-6">
-              We&apos;ve sent a verification link to your email. Once confirmed, you can start building comics.
-            </p>
-            <Link href="/auth/login" className="inline-block bg-yellow text-ink font-mono text-[11px] font-bold tracking-wider uppercase py-3 px-8 rounded-full mt-8 hover:bg-[#c8dc38] transition">
-              GO TO LOGIN
-            </Link>
+        <form onSubmit={handleSignup} className="flex flex-col gap-4">
+          <div>
+            <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">FULL NAME</label>
+            <input 
+              type="text" 
+              required
+              className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
+              placeholder="John Doe"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
           </div>
-        ) : (
-          <>
-            <form onSubmit={handleSignup} className="flex flex-col gap-4">
-              <div>
-                <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">FULL NAME</label>
-                <input 
-                  type="text" 
-                  required
-                  className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">EMAIL ADDRESS</label>
-                <input 
-                  type="email" 
-                  required
-                  className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">PASSWORD</label>
-                <input 
-                  type="password" 
-                  required
-                  className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              
-              <button 
-                type="submit"
-                disabled={loading}
-                className="bg-yellow text-ink font-mono text-[11px] font-bold tracking-wider uppercase py-3.5 rounded-full mt-2 hover:bg-[#c8dc38] transition disabled:opacity-50"
-              >
-                {loading ? 'CREATING ACCOUNT...' : 'SIGN UP →'}
-              </button>
-            </form>
-            
-            <p className="mt-6 text-center font-dm text-xs text-muted">
-              Already have an account? <Link href="/auth/login" className="text-ink font-bold hover:underline">LOG IN</Link>
-            </p>
-          </>
-        )}
+          <div>
+            <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">EMAIL ADDRESS</label>
+            <input 
+              type="email" 
+              required
+              className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block font-mono text-[10px] uppercase text-muted mb-1.5">PASSWORD</label>
+            <input 
+              type="password" 
+              required
+              className="w-full border border-ink/20 rounded-full px-4 py-2.5 font-dm text-sm outline-none focus:border-yellow"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          
+          <button 
+            type="submit"
+            disabled={loading}
+            className="bg-yellow text-ink font-mono text-[11px] font-bold tracking-wider uppercase py-3.5 rounded-full mt-2 hover:bg-[#c8dc38] transition disabled:opacity-50"
+          >
+            {loading ? 'CREATING ACCOUNT...' : 'SIGN UP →'}
+          </button>
+        </form>
+        
+        <p className="mt-6 text-center font-dm text-xs text-muted">
+          Already have an account? <Link href="/auth/login" className="text-ink font-bold hover:underline">LOG IN</Link>
+        </p>
       </div>
     </main>
   )

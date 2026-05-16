@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createSupabaseClient } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -9,7 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const supabase = createSupabaseClient()
+  const supabase = useMemo(() => createSupabaseClient(), [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +31,10 @@ export default function LoginPage() {
       
       if (error) {
         console.error('Login error:', error)
+        if (error.message.toLowerCase().includes('email not confirmed')) {
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`
+          return
+        }
         setError(error.message)
         setLoading(false)
       } else if (data?.user) {

@@ -65,6 +65,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
+  if (isProtected && user && !user.email_confirmed_at) {
+    const verifyUrl = new URL('/auth/verify-email', request.url)
+    if (user.email) verifyUrl.searchParams.set('email', user.email)
+    return NextResponse.redirect(verifyUrl)
+  }
+
   return response
 }
 
